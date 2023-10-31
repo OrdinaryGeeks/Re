@@ -1,27 +1,20 @@
-# React + TypeScript + Vite
+##Quiz Bowl
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Ordinary Geeks React SignalR Asp.Net Core Identity JWT tokens React Redux Toolkit
 
-Currently, two official plugins are available:
+This project uses signalR websockets and a react front end to simulate a simple quiz game. It is in early stages but is approcahing beta status.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+#How to traverse the website
 
-## Expanding the ESLint configuration
+\*Go to https://www.ordinarygeeks.com and register. The name you sign up to the Identity back end will be your username that other people see when you join games. In the lobby, you have to get your player handle (username) that you signed up with. You then have an option to create a game yourself or to join someone else's game, (if there are any extra games).
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+\*In the game you and an opponent, (that opponent can also be you if you open up two tabs), can answer questions to score points. A buzz in will block your opponent from buzzing in for 5 seconds. After that you will be marked as having given an incorrect answer and will not be able to buzz in again.
 
-- Configure the top-level `parserOptions` property like this:
+\*Either player can skip to the next question.
 
-```js
-   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-   },
-```
+#TO DO
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+*Synchronize the question index
+*Move all state logic to Redux Tool Kit
+*End game once points limit reached and declare winner
+*Track which games users join so that they can be removed from the signalR groups when they join a new game or disconnect

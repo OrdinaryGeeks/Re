@@ -16,12 +16,6 @@ function App() {
         <CssBaseline />
         <Header />
         <Outlet />
-        {/* <ul>
-        {questions.map((question, index) => (
-          <li key={index}>{question.text}</li>
-        ))}
-      </ul>
-      {<button onClick={addQuestion}>Add Question</button>*/}
       </ThemeProvider>
     </div>
   );
