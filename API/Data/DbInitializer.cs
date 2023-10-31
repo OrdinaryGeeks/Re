@@ -1,13 +1,38 @@
 
 
 using API.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace API.Data
 {
     public static class DbInitializer
     {
-        public static void Initialize(QuizBowlContext context)
+        public static async Task Initialize(QuizBowlContext context, UserManager<User> userManager)
         {
+
+
+            if(!userManager.Users.Any())
+            {
+                var user = new User{
+                    UserName="user1",
+                    Email="user1@user1.com"
+                };
+
+                 await userManager.CreateAsync(user, "CrazyPa$$12");
+                await userManager.AddToRoleAsync(user, "Member");
+
+
+                var admin = new User{
+                    UserName="admin1",
+                    Email="admin1@admin1.com"
+                };
+
+                await userManager.CreateAsync(admin, "CrazyPa$$12");
+                await userManager.AddToRolesAsync(admin, new[] {"Member","Admin"});
+
+            }
+
+
             if(context.Questions.Any())
             return;
 
@@ -15,7 +40,7 @@ namespace API.Data
 
                 new Question{
                     Text="Who is the leader of the Greek Gods",
-                    Answer="Zues",
+                    Answer="Zeus",
                     Points=100,
                     Category="Greek Mythology"
                 },

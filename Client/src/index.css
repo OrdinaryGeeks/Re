@@ -1,0 +1,21 @@
+.appbar {
+  width: 100%;
+}
+.cardHeadingDetails {
+  text-align: center;
+}
+
+.generalHeading {
+  text-align: center;
+  color: aquamarine;
+  margin-bottom: "30px";
+}
+
+.generalHeading2 {
+  text-align: center;
+  color: lightblue;
+}
+.buttonBox {
+  justify-content: center;
+  display: flex;
+}
