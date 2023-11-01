@@ -44,7 +44,7 @@ namespace API.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult> Register(RegisterDTO registerDTO)
+        public async Task<ActionResult<RegisterDTO>> Register(RegisterDTO registerDTO)
         {
 
 

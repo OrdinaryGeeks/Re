@@ -37,26 +37,14 @@ export default function Lobby() {
   const { user } = useAppSelector((state) => state.account);
   const { player, gameState, gameList } = useAppSelector((state) => state.quiz);
   const navigate = useNavigate();
-  /*const [player, setPlayer] = useState<Player>({
-    userName: "",
-    email: "",
-    score: 0,
-    gameStateId: -1,
-  });*/
-  //useEffect(() => {});
+
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (!user) navigate("/Login");
   });
-  //const navigate = useNavigate();
-  //async function submitForm(data: FieldValues) {
-  //    await dispatch(signInUser(data));
-  //  navigate("/");
-  //}
 
   function JoinGame(joinGameState: GameState) {
-    //alert(joinGameState.id);
     dispatch(joinGame(joinGameState)).then(() => navigate("/Game"));
   }
   function LeaveGame() {
@@ -75,6 +63,9 @@ export default function Lobby() {
         email: user.email,
         score: 0,
         gameStateId: null,
+        ready: false,
+        nextQuestion: false,
+        gameName: "",
       };
 
       console.log(userPlayer);
@@ -91,7 +82,8 @@ export default function Lobby() {
         scoreToWin: gameValues["targetScore"],
         maxPlayers: gameValues["maxPlayers"],
         status: "Lobby",
-        id: 1,
+        id: 0,
+        questionIndex: 0,
       };
       console.log(userGame);
       await dispatch(createGame(userGame));
@@ -117,17 +109,15 @@ export default function Lobby() {
               UserName : {player.userName}
             </Typography>
             <Typography variant="h6" className="cardHeadingDetails">
-              Game ID : {player.gameStateId}
+              Game Name : {gameState?.gameName}
+            </Typography>
+            <Typography variant="h6" className="cardHeadingDetails">
+              Player Score : {player.score}
             </Typography>
           </Card>
         )}
         {gameState && (
-          <Box
-            component="form"
-            onSubmit={handleSubmit(CreateOrGetPlayer)}
-            noValidate
-            sx={{ mt: 1 }}
-          >
+          <Box sx={{ mt: 1 }}>
             <Card>
               <Typography variant="h4" className="generalHeading2">
                 Your Current Game
@@ -228,23 +218,35 @@ export default function Lobby() {
             Search Games
           </Button>
         )}
-        {gameList &&
-          gameList.map((gameFromList: GameState) => (
-            <Card>
-              <Typography variant="h6">{gameFromList.gameName}</Typography>
-              <Typography variant="h6">{gameFromList.status}</Typography>
-              <Typography variant="h6">{gameFromList.scoreToWin}</Typography>
-              <Typography variant="h6">{gameFromList.maxPlayers}</Typography>
-              <Button onClick={() => JoinGame(gameFromList)}>Join Game</Button>
-            </Card>
-          ))}
+        {gameList && (
+          <Box>
+            {gameList.map((gameFromList: GameState) => (
+              <Box mb="30px">
+                <Card>
+                  <Typography variant="h6">
+                    Game Name: {gameFromList.gameName}
+                  </Typography>
+                  <Typography variant="h6">
+                    Game Status: {gameFromList.status}
+                  </Typography>
+                  <Typography variant="h6">
+                    Target Score: {gameFromList.scoreToWin}
+                  </Typography>
+
+                  <Button onClick={() => JoinGame(gameFromList)}>
+                    Join Game
+                  </Button>
+                </Card>
+              </Box>
+            ))}
+          </Box>
+        )}
         {gameState && (
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={!isValid}
             onClick={LeaveGame}
           >
             Leave Game

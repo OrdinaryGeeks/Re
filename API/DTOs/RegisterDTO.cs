@@ -9,5 +9,6 @@ namespace API.DTOs
     {
         
            public string Email{get;set;}
+           
     }
 }

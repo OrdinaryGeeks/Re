@@ -13,7 +13,7 @@ namespace API.Models
 
 
         [Key]
-        [DatabaseGenerated(System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption.Identity)]
+     
     public int Id{get;set;}
     
       public string   GameName{get;set;}
@@ -22,6 +22,8 @@ namespace API.Models
         public int ScoreToWin{get;set;}
 
         public int MaxPlayers{get;set;}
+
+        public int QuestionIndex{get;set;}
 
        
 

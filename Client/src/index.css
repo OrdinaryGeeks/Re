@@ -19,3 +19,8 @@
   justify-content: center;
   display: flex;
 }
+
+.scoreHeading {
+  text-align: center;
+  color: red;
+}

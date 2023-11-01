@@ -4,6 +4,7 @@ using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(QuizBowlContext))]
-    partial class QuizBowlContextModelSnapshot : ModelSnapshot
+    [Migration("20231031134334_PlayerIncorrect")]
+    partial class PlayerIncorrect
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -206,13 +209,13 @@ namespace API.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "06b1af0e-03aa-4610-9f22-f8634497e9f2",
+                            Id = "5340bc12-2edf-4da1-b8a3-58d1153715f7",
                             Name = "Member",
                             NormalizedName = "MEMBER"
                         },
                         new
                         {
-                            Id = "a72c5454-b94a-4b74-a9f1-447732bf7a48",
+                            Id = "8f475d68-8813-4ca3-bc13-273d704b3423",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });

@@ -4,6 +4,7 @@ using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(QuizBowlContext))]
-    partial class QuizBowlContextModelSnapshot : ModelSnapshot
+    [Migration("20231031113905_PlayerReadyAndNextQuestion")]
+    partial class PlayerReadyAndNextQuestion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -61,14 +64,8 @@ namespace API.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("GameName")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int?>("GameStateId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("Incorrect")
-                        .HasColumnType("bit");
 
                     b.Property<bool>("NextQuestion")
                         .HasColumnType("bit");
@@ -206,13 +203,13 @@ namespace API.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "06b1af0e-03aa-4610-9f22-f8634497e9f2",
+                            Id = "e1217750-51f3-4113-8135-ac546f5d7e88",
                             Name = "Member",
                             NormalizedName = "MEMBER"
                         },
                         new
                         {
-                            Id = "a72c5454-b94a-4b74-a9f1-447732bf7a48",
+                            Id = "41371e43-04ec-4d26-8bd0-4a8253cbbea6",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });

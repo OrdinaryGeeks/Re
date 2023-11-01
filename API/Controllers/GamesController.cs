@@ -29,6 +29,16 @@ namespace API.Controllers
             return await _context.GameStates.ToListAsync();
         }
 
+
+        [HttpGet("lobby")]
+            public async Task<ActionResult<IEnumerable<GameState>>> GetGameState()
+        {
+          return   await _context.GameStates.Where(gameS => gameS.Status.ToLower() == "lobby").ToListAsync();
+
+            
+        }
+
+
         // GET: api/Games/5
         [HttpGet("{id}")]
         public async Task<ActionResult<GameState>> GetGameState(int id)
@@ -86,8 +96,8 @@ namespace API.Controllers
         public async Task<ActionResult<GameState>> PostGameState(GameState gameState)
         {
 
-            GameState newGameState = new GameState(){GameName=gameState.GameName, MaxPlayers=gameState.MaxPlayers, ScoreToWin=gameState.ScoreToWin, Status=gameState.Status};
-            _context.GameStates.Add(newGameState);
+          //  GameState newGameState = new GameState(){GameName=gameState.GameName, MaxPlayers=gameState.MaxPlayers, ScoreToWin=gameState.ScoreToWin, Status=gameState.Status};
+            _context.GameStates.Add(gameState);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetGameState", new { id = gameState.Id }, gameState);

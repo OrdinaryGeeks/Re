@@ -2,6 +2,7 @@ import { Button, Menu, Fade, MenuItem, Typography } from "@mui/material";
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { signOut } from "../../features/account/accountSlice";
+import { leaveGame } from "../../features/quizBowl/quizSlice";
 
 import { useAppDispatch, useAppSelector } from "../Store/configureStore";
 
@@ -44,6 +45,7 @@ export default function SignedInMenu() {
         </MenuItem>
         <MenuItem
           onClick={() => {
+            dispatch(leaveGame());
             dispatch(signOut());
           }}
         >

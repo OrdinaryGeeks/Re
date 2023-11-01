@@ -19,7 +19,11 @@ export default function QuestionBox(props: {
       {
         <Card>
           <Typography className="generalHeading" mb="10px" variant="h6">
-            Current Question
+            Current Question{" "}
+            {
+              props.questions[props.questionIndex % props.questions.length]
+                .points
+            }
           </Typography>
           <Typography className="generalHeading2" mb="10px" variant="h6">
             {props.questions[props.questionIndex % props.questions.length].text}

@@ -6,33 +6,30 @@ export default class signalRConnector {
   private connection: signalR.HubConnection;
 
   public incrementQuestionIndexEvent: (
-    onIncrementQuestionIndex: (userName: string) => void
-  ) => void;
-
-  public events: (
-    onMessageReceived: (userName: string, message: string) => void
+    onIncrementQuestionIndex: (userName: string, questionIndex: number) => void
   ) => void;
 
   public buzzEvent: (
     onBuzzIn: (userName: string, gameName: string) => void
   ) => void;
-  public scoreEvent: (
-    onCorrectAnswer: (userName: string, points: number) => void
-  ) => void;
 
+  public playerReadyEvent: (onPlayerReady: (userID: number) => void) => void;
+  public playerNotReadyEvent: (onPlayerNotReady: () => void) => void;
   public groupScoreEvent: (
-    onGroupCorrectAnswer: (userName: string, points: number) => void
+    onGroupCorrectAnswer: (questionIndex: number) => void
   ) => void;
   public groupIncorrectAnswerEvent: (
     onGroupCorrectAnswer: (userName: string) => void
   ) => void;
 
+  public winnerEvent: (onWinner: (userName: string) => void) => void;
+
   public playerAddedToGameEvent: (
-    onPlayerAddedToGame: (info: string) => void
+    onPlayerAddedToGame: (info: string, questionIndex: number) => void
   ) => void;
-  public createOrJoinEvent: (
-    onCreateOrJoinGroup: (gameName: string) => void
-  ) => void;
+  public leaveGameEvent: (onLeaveGame: (gameName: string) => void) => void;
+
+  public startGameEvent: (onStartGame: () => void) => void;
 
   public groupBuzzInEvent: (onGroupBuzzIn: (userName: string) => void) => void;
 
@@ -57,26 +54,39 @@ export default class signalRConnector {
     };
 
     this.incrementQuestionIndexEvent = (onIncrementQuestionIndex) => {
-      this.connection.on("incrementQuestionIndex", (userName) => {
-        onIncrementQuestionIndex(userName);
+      this.connection.on(
+        "incrementQuestionIndex",
+        (userName, questionIndex) => {
+          onIncrementQuestionIndex(userName, questionIndex);
+        }
+      );
+    };
+    this.playerNotReadyEvent = (onPlayerNotReady) => {
+      this.connection.on("playerNotReady", () => {
+        onPlayerNotReady();
+      });
+    };
+    this.playerReadyEvent = (onPlayerReady) => {
+      this.connection.on("playerReady", (userID) => {
+        onPlayerReady(userID);
       });
     };
     this.playerAddedToGameEvent = (onPlayerAddedToGame) => {
       //alert("Hello");
-      this.connection.on("playerAddedToGame", (info) => {
+      this.connection.on("playerAddedToGame", (info, questionIndex) => {
         //  alert(info);
-        onPlayerAddedToGame(info);
+        onPlayerAddedToGame(info, questionIndex);
       });
     };
-    this.events = (onMessageReceived) => {
-      this.connection.on("messageReceived", (username, message) => {
-        onMessageReceived(username, message);
+    this.winnerEvent = (onWinner) => {
+      this.connection.on("Winner", (userName) => {
+        onWinner(userName);
       });
     };
 
-    this.createOrJoinEvent = (onCreateOrJoinGroup) => {
-      this.connection.on("CreateOrJoinGroup", (gameName) => {
-        onCreateOrJoinGroup(gameName);
+    this.leaveGameEvent = (onLeaveGame) => {
+      this.connection.on("playerLeftGame", (userName) => {
+        onLeaveGame(userName);
       });
     };
     this.buzzEvent = (onBuzzIn) => {
@@ -84,9 +94,14 @@ export default class signalRConnector {
         onBuzzIn(userName, gameName);
       });
     };
+    this.startGameEvent = (onStartGame) => {
+      this.connection.on("StartGame", () => {
+        onStartGame();
+      });
+    };
     this.groupScoreEvent = (onGroupCorrectAnswer) => {
-      this.connection.on("Group Correct Answer", (userName, points) => {
-        onGroupCorrectAnswer(userName, points);
+      this.connection.on("Group Correct Answer", (questionIndex) => {
+        onGroupCorrectAnswer(questionIndex);
       });
     };
     this.groupIncorrectAnswerEvent = (onGroupIncorrectAnswer) => {
@@ -95,66 +110,83 @@ export default class signalRConnector {
         onGroupIncorrectAnswer(userName);
       });
     };
-    this.scoreEvent = (onCorrectAnswer) => {
-      this.connection.on("Correct Answer", (userName, points) => {
-        onCorrectAnswer(userName, points);
-      });
-    };
+
     this.connection.onclose(() => {
       //  alert("Closed");
     });
   }
 
   public isConnected = () => {
-    // alert("In Isconnected");
     return this.connection.state == signalR.HubConnectionState.Connected;
   };
-  public createOrJoinGroup = (gameName: string, userName: string) => {
-    //if (this.connection.state == signalR.HubConnectionState.Connected) {
-    if (this.isConnected())
-      //alert("signalr connected");
-      this.connection.send("CreateOrJoinGame", gameName, userName);
 
-    //return true;
-    //} //else return false;
+  public playerReadySignal = (
+    gameName: string,
+    userID: number,
+    ready: boolean
+  ) => {
+    if (ready) this.connection.send("PlayerReadySignal", gameName, userID);
+    else this.connection.send("PlayerNotReadySignal", gameName, userID);
+  };
+  public createOrJoinGroupSignal = (
+    gameName: string,
+    userName: string,
+    userID: number,
+    gameID: number
+  ) => {
+    this.connection.send(
+      "CreateOrJoinGame",
+      gameName,
+      userName,
+      userID,
+      gameID
+    );
+  };
+
+  public startGameSignal = (gameID: number) => {
+    this.connection.send("StartGame", gameID);
+  };
+  public leaveGameSignal = (
+    gameName: string,
+    userName: string,
+    userID: number
+  ) => {
+    this.connection.send("LeaveGame", gameName, userName, userID);
   };
 
   public groupIncrementQuestionIndexSignal = (
     userName: string,
-    gameName: string
+    gameName: string,
+    gameID: number
   ) => {
-    //  alert("GIQ");
-    // alert(this.isConnected());
-    this.connection.send("IncrementQuestionIndex", gameName, userName);
+    this.connection.send("IncrementQuestionIndex", gameName, userName, gameID);
   };
   public groupBuzzInSignal = (userName: string, gameName: string) => {
-    // alert("GS");
-    // alert(this.isConnected());
     this.connection.send("groupBuzzIn", userName, gameName);
   };
 
   public groupScoreSignal = (
-    userName: string,
     gameName: string,
-    points: number
+    points: number,
+    playerID: number,
+    gameID: number
   ) => {
-    this.connection.send("GroupCorrectAnswer", userName, gameName, points);
+    this.connection.send(
+      "GroupCorrectAnswer",
+      gameName,
+      points,
+      playerID,
+      gameID
+    );
   };
 
+  public groupWinnerSignal = (userName: string, gameName: string) => {
+    this.connection.send("GroupWinner", userName, gameName);
+  };
   public groupIncorrectAnswerSignal = (userName: string, gameName: string) => {
     this.connection.send("GroupIncorrectAnswer", userName, gameName);
   };
-  public score = (userName: string, points: number) => {
-    this.connection.send("Correct Answer", userName, points);
-  };
-  public buzzInSignal = (userName: string, gameName: string | null) => {
-    this.connection.send("BuzzIn", userName, gameName);
-  };
-  public newMessage = (messages: string) => {
-    this.connection
-      .send("newMessage", "foo", messages)
-      .then(() => console.log("sent"));
-  };
+
   public static getInstance(): signalRConnector {
     if (!signalRConnector.instance)
       signalRConnector.instance = new signalRConnector();

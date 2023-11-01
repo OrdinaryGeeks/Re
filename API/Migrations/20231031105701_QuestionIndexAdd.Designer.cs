@@ -4,6 +4,7 @@ using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(QuizBowlContext))]
-    partial class QuizBowlContextModelSnapshot : ModelSnapshot
+    [Migration("20231031105701_QuestionIndexAdd")]
+    partial class QuestionIndexAdd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -61,20 +64,8 @@ namespace API.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("GameName")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int?>("GameStateId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("Incorrect")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("NextQuestion")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("Ready")
-                        .HasColumnType("bit");
 
                     b.Property<int>("Score")
                         .HasColumnType("int");
@@ -206,13 +197,13 @@ namespace API.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "06b1af0e-03aa-4610-9f22-f8634497e9f2",
+                            Id = "80836862-5d4a-4398-8cec-976e2739c399",
                             Name = "Member",
                             NormalizedName = "MEMBER"
                         },
                         new
                         {
-                            Id = "a72c5454-b94a-4b74-a9f1-447732bf7a48",
+                            Id = "25859d7c-7adb-488f-9111-0af3bb2b2759",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });

@@ -4,6 +4,7 @@ using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(QuizBowlContext))]
-    partial class QuizBowlContextModelSnapshot : ModelSnapshot
+    [Migration("20231031120702_PlayerReadyAndGameName")]
+    partial class PlayerReadyAndGameName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,9 +69,6 @@ namespace API.Migrations
 
                     b.Property<int?>("GameStateId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("Incorrect")
-                        .HasColumnType("bit");
 
                     b.Property<bool>("NextQuestion")
                         .HasColumnType("bit");
@@ -206,13 +206,13 @@ namespace API.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "06b1af0e-03aa-4610-9f22-f8634497e9f2",
+                            Id = "dfb2b546-463f-4fd8-8b04-67ed6fb72a69",
                             Name = "Member",
                             NormalizedName = "MEMBER"
                         },
                         new
                         {
-                            Id = "a72c5454-b94a-4b74-a9f1-447732bf7a48",
+                            Id = "2c843533-cab7-4e14-b806-856d11261bf3",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });

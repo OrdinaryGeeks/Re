@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Question } from "../../question";
 import Button from "@mui/material/Button";
 
-import { Player } from "./Player";
 import { useAppDispatch, useAppSelector } from "../../app/Store/configureStore";
 import { Box, Card } from "@mui/material";
 import Typography from "@material-ui/core/Typography";
-import { getUsersInGame, updateUsersInGame } from "./quizSlice";
+import { getGame, getUsersInGame, leaveGame, loser, winner } from "./quizSlice";
 import QuestionBox from "./QuestionBox";
+import { useNavigate } from "react-router-dom";
+import { router } from "../../app/router/Routes";
 
 export default function QuizBowl() {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -16,31 +17,42 @@ export default function QuizBowl() {
   const [answer, setAnswer] = useState("");
 
   const [isLoading, setLoading] = useState(true);
-  const [incorrect, setIncorrect] = useState(false);
+  //const [incorrect, setIncorrect] = useState(false);
   const [buzzedIn, setBuzzIn] = useState(false);
   const [buzzedInPlayer, setBuzzedInPlayer] = useState("");
   const [gameJoinedOnHub, setGameJoinedOnHub] = useState(false);
+  const [startGame, setStartGame] = useState(false);
 
   const { gameState, usersInGame, player } = useAppSelector(
     (state) => state.quiz
   );
 
+  const [allPlayersReady, setAllPlayersReady] = useState(false);
   const signalRConnection = useAppSelector(
     (signalR) => signalR.signalR.connection
   );
 
   const {
     groupIncorrectAnswerEvent,
+    playerNotReadyEvent,
     groupIncorrectAnswerSignal,
     groupBuzzInSignal,
     groupScoreEvent,
     groupScoreSignal,
     groupBuzzInEvent,
+    groupWinnerSignal,
+    startGameSignal,
+    startGameEvent,
+    leaveGameEvent,
+    leaveGameSignal,
+    winnerEvent,
     incrementQuestionIndexEvent,
     groupIncrementQuestionIndexSignal,
     playerAddedToGameEvent,
+    playerReadySignal,
+    playerReadyEvent,
 
-    createOrJoinGroup,
+    createOrJoinGroupSignal,
   } = signalRConnection;
 
   const dispatch = useAppDispatch();
@@ -51,25 +63,75 @@ export default function QuizBowl() {
     console.log(gameState);
   }, [gameState, dispatch]);
 
-  const playerName = useMemo(() => player?.userName, [player]);
+  const playerName = useMemo(() => player?.userName, [player?.userName]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    playerAddedToGameEvent((info: string) => {
+    startGameEvent(() => {
+      // alert("SGE");
+      if (gameState) {
+        dispatch(getGame(gameState.id));
+        setStartGame(true);
+      }
+    });
+  }, [gameState, dispatch, startGameEvent]);
+  useEffect(() => {
+    playerAddedToGameEvent((info: string, questionIndex: number) => {
       getUsers();
+      // alert("In pATG" + usersInGame);
       console.log(info);
-      if (playerName == info) setGameJoinedOnHub(true);
+      if (playerName == info) {
+        setGameJoinedOnHub(true);
+        setQI(questionIndex);
+      }
     });
   }, [playerAddedToGameEvent, getUsers, setGameJoinedOnHub, playerName]);
 
   useEffect(() => {
-    groupIncorrectAnswerEvent((userName: string) => {
-      if (userName == playerName) {
-        setIncorrect((c) => (c ? true : true));
+    playerReadyEvent((userID: number) => {
+      getUsers();
+      if (usersInGame) {
+        if (
+          usersInGame?.filter((checkUser) => {
+            if (!checkUser.ready) {
+              console.log(checkUser?.userName);
+              return true;
+            } else return false;
+          }).length == 0
+        ) {
+          console.log(userID + "Click start game if you ready");
+          setAllPlayersReady(true);
+        }
       }
     });
-  }, [playerName, groupIncorrectAnswerEvent]);
+  }, [playerReadyEvent, usersInGame, getUsers]);
+
   useEffect(() => {
-    alert("fetching questions");
+    playerNotReadyEvent(() => {
+      console.log("player not ready");
+      getUsers();
+      setAllPlayersReady(false);
+    });
+  }, [playerNotReadyEvent, getUsers]);
+  useEffect(() => {
+    leaveGameEvent((info: string) => {
+      getUsers();
+      console.log(info);
+      //if (playerName != info) {
+      // alert(info + " left the game");
+    });
+  }, [leaveGameEvent, getUsers, setGameJoinedOnHub, playerName, dispatch]);
+
+  useEffect(() => {
+    groupIncorrectAnswerEvent((userName: string) => {
+      //  if (userName == playerName) {
+      //  setIncorrect((c) => (c ? true : true));
+      console.log(userName);
+    });
+  }, [groupIncorrectAnswerEvent]);
+
+  useEffect(() => {
+    // alert("fetching questions");
     fetch(import.meta.env.VITE_API_URL + "/questions")
       .then((response) => response.json())
       .then((data: Question[]) => {
@@ -79,47 +141,52 @@ export default function QuizBowl() {
         setLoading(false);
       });
   }, []);
-  const getGroupScore = useCallback(
-    (userName: string, points: number) => {
-      if (usersInGame) {
-        const newUsersInGame = usersInGame.map((user) => {
-          if (user.userName == userName) {
-            const newUser: Player = {
-              userName: user.userName,
-              score: user.score + points,
-              gameStateId: user.gameStateId,
-              id: user.id,
-              email: user.email,
-            };
-            console.log("Made newUser");
 
-            return newUser;
-          } else return user;
-        });
-        console.log(newUsersInGame);
-
-        dispatch(updateUsersInGame(newUsersInGame));
+  useEffect(() => {
+    if (player && gameState)
+      if (player.score >= gameState?.scoreToWin) {
+        groupWinnerSignal(player?.userName, gameState?.gameName);
       }
-    },
-    [usersInGame, dispatch]
-  );
+  }, [player, gameState, groupWinnerSignal]);
+
   useEffect(() => {
-    groupScoreEvent((userName: string, points: number) => {
-      console.log("GSE");
-      getGroupScore(userName, points);
-      setIncorrect((c) => (c ? false : false));
-      setQI((c) => c + 1);
+    groupScoreEvent((questionIndex: number) => {
+      getUsers();
+      //if (usersInGame) alert(usersInGame.length);
+      setBuzzIn(false);
+      //  setIncorrect((c) => (c ? false : false));
+      setQI(questionIndex);
     });
-  }, [getGroupScore, groupScoreEvent]);
+  }, [getUsers, groupScoreEvent]);
   useEffect(() => {
-    incrementQuestionIndexEvent((userName: string) => {
+    incrementQuestionIndexEvent((userName: string, questionIndex: number) => {
       console.log(userName + " in increment qi");
 
-      setQI((c) => c + 1);
-      setIncorrect((c) => (c ? false : false));
+      setQI(questionIndex);
+      // setIncorrect((c) => (c ? false : false));
     });
   }, [incrementQuestionIndexEvent, playerName]);
 
+  useEffect(() => {
+    winnerEvent((userName) => {
+      if (playerName == userName) {
+        //  alert("You Have Won");
+
+        if (gameState && player) {
+          dispatch(winner([gameState, player])).then(() =>
+            router.navigate("/Winner")
+          );
+        }
+      } //alert("You Have Lost");
+      else {
+        if (gameState && player) {
+          dispatch(loser([gameState, player])).then(() =>
+            router.navigate("/Loser")
+          );
+        }
+      }
+    });
+  }, [dispatch, winnerEvent, playerName, navigate, gameState, player]);
   // const elapsedTime = useRef(0);
   useEffect(() => {
     groupBuzzInEvent((userName) => {
@@ -132,48 +199,95 @@ export default function QuizBowl() {
 
   function joinGameOnHub() {
     if (gameState && player)
-      createOrJoinGroup(gameState.gameName, player.userName);
+      createOrJoinGroupSignal(
+        gameState.gameName,
+        player.userName,
+        player.id,
+        gameState.id
+      );
+  }
+
+  function leaveGameOnHub() {
+    if (gameState && player) {
+      //alert("leaving game");
+      // alert(player.gameName + " " + player.userName);
+      leaveGameSignal(gameState.gameName, player.userName, player.id);
+      dispatch(leaveGame());
+    }
   }
 
   function incrementSignal() {
     console.log("inc signal");
     if (gameState && player)
-      groupIncrementQuestionIndexSignal(player.userName, gameState.gameName);
+      groupIncrementQuestionIndexSignal(
+        player.userName,
+        gameState.gameName,
+        gameState.id
+      );
+  }
+
+  function readyToStartGame() {
+    if (player && player.gameName) {
+      // const startPlayer = {...player, ready:true};
+      // dispatch(updatePlayer(startPlayer));
+      //if(player)
+      alert("readyToStart");
+      playerReadySignal(player.gameName, player?.id, true);
+    }
+  }
+
+  function startGameNow() {
+    alert("SGN");
+    if (gameState) startGameSignal(gameState.id);
+  }
+  function notReadyToStartGame() {
+    if (player && player.gameName) {
+      playerReadySignal(player.gameName, player?.id, false);
+    }
   }
 
   const checkAnswer = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (answer == questions[questionIndex % questions.length].answer) {
-      alert("Congratulations");
+      // alert("Congratulations");
 
       if (player && gameState)
         groupScoreSignal(
-          player.userName,
           gameState.gameName,
-          questions[questionIndex % questions.length].points
+          questions[questionIndex % questions.length].points,
+          player.id,
+          gameState.id
         );
     } else {
-      alert("Wrong answer");
+      //  alert("Wrong answer");
       if (player && gameState)
         groupIncorrectAnswerSignal(player.userName, gameState.gameName);
     }
   };
 
+  /*
   if (buzzedIn) {
     setTimeout(() => {
       if (!incorrect) {
         setBuzzIn(false);
       }
     }, 5000);
-  }
+  }*/
 
   let disable: boolean;
-  if (incorrect || buzzedIn) disable = true;
+  if (buzzedIn) disable = true;
   return (
     <div>
       <Typography variant="h4" mb="30px" className="generalHeading">
-        {gameState?.gameName}
+        {gameState?.gameName} {startGame && <div>startgame</div>}{" "}
+        {gameState?.id} {player?.gameStateId}
+      </Typography>
+
+      <Typography>{allPlayersReady && <div>allplayers</div>}</Typography>
+      <Typography>{!allPlayersReady && <div>! allplayers</div>}</Typography>
+      <Typography variant="h6" mb="30px" className="scoreHeading">
+        Target Score : {gameState?.scoreToWin}
       </Typography>
 
       <Box className="buttonBox">
@@ -187,9 +301,51 @@ export default function QuizBowl() {
             Join Game on Hub
           </Button>
         )}
+        {gameJoinedOnHub && (
+          <Box display="flex">
+            <Button
+              type="button"
+              className="buttonBox"
+              variant="contained"
+              onClick={leaveGameOnHub}
+            >
+              Leave Game on Hub
+            </Button>
+            {player && !startGame && !player.ready && (
+              <Button
+                type="button"
+                className="buttonBox"
+                variant="contained"
+                onClick={readyToStartGame}
+              >
+                Ready to Start
+              </Button>
+            )}
+            {player && !startGame && player.ready && (
+              <Button
+                type="button"
+                className="buttonBox"
+                variant="contained"
+                onClick={notReadyToStartGame}
+              >
+                Not Ready to Start
+              </Button>
+            )}
+            {player && !startGame && allPlayersReady && (
+              <Button
+                type="button"
+                className="buttonBox"
+                variant="contained"
+                onClick={startGameNow}
+              >
+                Start
+              </Button>
+            )}
+          </Box>
+        )}
       </Box>
 
-      {gameJoinedOnHub && !isLoading && (
+      {startGame && !isLoading && (
         <QuestionBox
           onClick={incrementSignal}
           questions={questions}
@@ -197,7 +353,7 @@ export default function QuizBowl() {
         />
       )}
 
-      {gameJoinedOnHub &&
+      {startGame &&
         usersInGame &&
         gameState &&
         usersInGame.map((mappedPlayer) => (
@@ -230,7 +386,8 @@ export default function QuizBowl() {
 
               {player &&
                 buzzedIn &&
-                buzzedInPlayer == mappedPlayer.userName && (
+                buzzedInPlayer == mappedPlayer.userName &&
+                mappedPlayer.userName == player.userName && (
                   <Box className="buttonBox">
                     <Box component="form" onSubmit={(e) => checkAnswer(e)}>
                       <input

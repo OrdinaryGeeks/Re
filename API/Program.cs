@@ -43,7 +43,10 @@ builder.Services.AddSwaggerGen(option =>
 builder.Services.AddCors();
 builder.Services.AddSignalR();
 builder.Services.AddIdentityCore<User>(
-    option => option.User.RequireUniqueEmail = true
+    option => {option.User.RequireUniqueEmail = true;
+    
+    }
+    
 )
     
 

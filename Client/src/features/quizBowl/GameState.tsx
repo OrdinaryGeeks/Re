@@ -4,4 +4,5 @@ export interface GameState {
   status: string;
   scoreToWin: number;
   maxPlayers: number;
+  questionIndex: number;
 }

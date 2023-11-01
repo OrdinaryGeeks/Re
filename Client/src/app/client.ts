@@ -22,9 +22,14 @@ const Account = {
 };
 
 const Game = {
+  getGame: (value: number) => requests.get("games/" + value),
   create: (values: any) => requests.post("games", values),
   list: () => requests.get("games"),
-  updateGame: (values: GameState) => requests.put("games/" + values.id, values),
+  lobbyList: () => requests.get("games/lobby"),
+  finishedList: () => requests.get("games/finished"),
+  updateGame: (values: GameState) => {
+    requests.put("games/" + values.id, values);
+  },
   getPlayersInGame: (value: number) =>
     requests.get("games/usersInGame/" + value),
 };
@@ -33,9 +38,12 @@ const Player = {
   createOrReturn: (values: any) =>
     requests.post("players/CreateIfNotExists", values),
   updateGameState: (values: Player) => {
-    alert("players/" + values.id);
+    //alert("players/" + values.id);
     requests.put("players/" + values.id, values);
   },
+
+  updatePlayer: (values: Player) =>
+    requests.put("players/" + values.id, values),
 };
 const agent = {
   Account,

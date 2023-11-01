@@ -4,4 +4,7 @@ export interface Player {
   score: number;
   email: string;
   gameStateId: number | null;
+  ready: boolean;
+  nextQuestion: boolean;
+  gameName: string | null;
 }

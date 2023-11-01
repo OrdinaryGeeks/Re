@@ -9,6 +9,8 @@ import Register from "../../features/account/Register";
 import GamePage from "../../features/Game/GamePage";
 import Lobby from "../../features/quizBowl/Lobby";
 import CreateGame from "../../features/quizBowl/CreateGame";
+import Winner from "../../features/quizBowl/Winner";
+import Loser from "../../features/quizBowl/Loser";
 
 export const router = createBrowserRouter([
   {
@@ -23,6 +25,8 @@ export const router = createBrowserRouter([
       { path: "/game", element: <GamePage /> },
       { path: "/lobby", element: <Lobby /> },
       { path: "/createGame", element: <CreateGame /> },
+      { path: "/winner", element: <Winner /> },
+      { path: "/loser", element: <Loser /> },
     ],
   },
 ]);

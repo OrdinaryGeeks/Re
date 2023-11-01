@@ -19,6 +19,13 @@ namespace API.Models
 
   public int? GameStateId{get;set;}
 
+  public string GameName{get;set;}
+
+  public bool Incorrect{get;set;}
+  public bool Ready {get;set;}
+
+  public bool NextQuestion{get;set;}
+
 
 }
 
