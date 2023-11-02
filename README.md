@@ -8,9 +8,10 @@ This project uses signalR websockets and a react front end to simulate a simple 
 
 - Go to https://www.ordinarygeeks.com and register. The name you sign up to the Identity back end will be your username that other people see when you join games. In the lobby, you have to get your player handle (username) that you signed up with. You then have an option to create a game yourself or to join someone else's game, (if there are any extra games).
 
-- In the game you and an opponent, (that opponent can also be you if you open up two tabs), can answer questions to score points. A buzz in will block your opponent from buzzing in for 5 seconds. After that you will be marked as having given an incorrect answer and will not be able to buzz in again.
+- In the game you and opponents, (which can also be you if you open up two tabs), can answer questions to score points. A buzz in will block your opponent but the timer is not working to unbuzz someone so.
+  <strike> After that you will be marked as having given an incorrect answer and will not be able to buzz in again.</strike>
 
-- Either player can skip to the next question.
+- Any player can skip to the next question.
 
 # TO DO
 
