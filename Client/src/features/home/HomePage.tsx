@@ -1,4 +1,4 @@
-import { Container, CssBaseline, Box, Card } from "@mui/material";
+import { Container, CssBaseline, Box, Card, Paper } from "@mui/material";
 import Typography from "@mui/material/Typography";
 
 export default function HomePage() {
@@ -30,29 +30,31 @@ export default function HomePage() {
         </Card>
         <Typography variant="h6">Ordinary Geeks React Site</Typography>
 
-        <Card sx={{ marginTop: 10 }}>
+        <Paper elevation={3} sx={{ marginTop: 10 }}>
           <Typography variant="body1">
-            Quiz Bowl from Ordinary Geeks is a React SignalR Asp.Net Core
-            Identity JWT tokens React Redux Toolkit project. It uses signalR
-            websockets and a react front end to simulate a simple quiz game. It
-            is in early stages but is approcahing beta status. # How to traverse
-            the website - Go to https://www.ordinarygeeks.com and register. The
-            name you sign up to the Identity back end with will be your username
-            that other people see when you join games. In the lobby, you have to
-            get your player handle (username) that you signed up with. You then
-            have an option to create a game yourself or to join someone else's
-            game, (if there are any extra games). In the game you and an
-            opponent, (that opponent can also be you if you open up two tabs),
-            can answer questions to score points. A buzz in will block your
-            opponent from buzzing in for 5 seconds. After that you will be
-            marked as having given an incorrect answer and will not be able to
-            buzz in again. - Either player can skip to the next question. # TO
-            DO - Synchronize the question index - Move all state logic to Redux
-            Tool Kit - End game once points limit reached and declare winner -
-            Track which games users join so that they can be removed from the
-            signalR groups when they join a new game or disconnect
+            Quiz Bowl from Ordinary Geeks is a React, SignalR, Asp.Net Core
+            project that uses Identity JWT tokens, React Redux Toolkit, and SQL
+            server. The signalR websockets and a react front end help simulate a
+            simple quiz game. It is in early stages but is approcahing demo
+            status.
           </Typography>
-        </Card>
+
+          <Typography variant="h4">How to traverse the website -</Typography>
+          <Typography variant="body1">
+            Register. Then you will be taken to the Sign in screen. Sign in with
+            the name you registered with. In the lobby, you have to get your
+            player handle (username) that you signed up with. You then have an
+            option to create a game yourself or to join someone else's game, (if
+            there are any extra games that have not been started).
+          </Typography>
+          <Typography variant="body1">
+            In the game, you and opponents, (who can also be you if you open up
+            two browsers), can answer questions to score points. A buzz in will
+            block your opponent from buzzing in. Any player can skip to the next
+            question.
+          </Typography>
+          <Typography variant="h4">TO DO</Typography>
+        </Paper>
       </Box>
     </Container>
   );

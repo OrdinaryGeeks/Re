@@ -14,6 +14,7 @@ This project uses signalR websockets and a react front end to simulate a simple 
 
 # TO DO
 
+<strike>
 - Synchronize the question index
 
 - Move all state logic to Redux Tool Kit
@@ -21,3 +22,10 @@ This project uses signalR websockets and a react front end to simulate a simple 
 - End game once points limit reached and declare winner
 
 - Track which games users join so that they can be removed from the signalR groups when they join a new game or disconnect
+  </strike>
+
+- Add Timer back
+
+- Prettify
+
+- Build front end tools to add questions/answers

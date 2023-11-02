@@ -13,6 +13,8 @@ const requests = {
   post: (url: string, body: {}) => axios.post(url, body).then(responseBody),
   put: (url: string, body: {}) => axios.put(url, body).then(responseBody),
   delete: (url: string) => axios.delete(url).then(responseBody),
+  get2: (url: string) => axios.get(url),
+  put2: (url: string, body: {}) => axios.put(url, body),
 };
 
 const Account = {
@@ -35,13 +37,15 @@ const Game = {
 };
 
 const Player = {
+  getPlayer: (id: number) => requests.get("players/" + id),
   createOrReturn: (values: any) =>
     requests.post("players/CreateIfNotExists", values),
   updateGameState: (values: Player) => {
     //alert("players/" + values.id);
     requests.put("players/" + values.id, values);
   },
-
+  updatePlayer2: (values: Player) =>
+    requests.put2("players/" + values.id, values),
   updatePlayer: (values: Player) =>
     requests.put("players/" + values.id, values),
 };

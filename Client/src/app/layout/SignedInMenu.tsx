@@ -1,6 +1,6 @@
 import { Button, Menu, Fade, MenuItem, Typography } from "@mui/material";
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { signOut } from "../../features/account/accountSlice";
 import { leaveGame } from "../../features/quizBowl/quizSlice";
 
@@ -11,7 +11,7 @@ export default function SignedInMenu() {
   const { user } = useAppSelector((state) => state.account);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-
+  const { player } = useAppSelector((state) => state.quiz);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleClick = (event: any) => {
     setAnchorEl(event.currentTarget);
@@ -21,6 +21,9 @@ export default function SignedInMenu() {
     setAnchorEl(null);
   };
 
+  function leaveGameFromMenu() {
+    if (player) dispatch(leaveGame(player));
+  }
   return (
     <>
       <Typography
@@ -31,7 +34,7 @@ export default function SignedInMenu() {
       >
         Lobby
       </Typography>
-      <Button color="inherit" onClick={handleClick} sx={{ typography: "h6" }}>
+      <Button color="inherit" onClick={handleClick} sx={{ typography: "h4" }}>
         {user?.email}
       </Button>
       <Menu
@@ -40,12 +43,9 @@ export default function SignedInMenu() {
         onClose={handleClose}
         TransitionComponent={Fade}
       >
-        <MenuItem component={Link} to="/game">
-          Quiz Bowl
-        </MenuItem>
         <MenuItem
           onClick={() => {
-            dispatch(leaveGame());
+            leaveGameFromMenu();
             dispatch(signOut());
           }}
         >

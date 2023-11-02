@@ -3,13 +3,14 @@ import agent from "../../app/client";
 import { router } from "../../app/router/Routes";
 import { GameState } from "./GameState";
 import { Player } from "./Player";
+import axios from "axios";
 interface QuizState {
   gameState: GameState | null;
   player: Player | null;
   usersInGame: Player[] | null;
   gameList: GameState[] | null;
 }
-
+axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 const initialState: QuizState = {
   gameState: null,
   player: null,
@@ -17,6 +18,7 @@ const initialState: QuizState = {
   usersInGame: [],
 };
 
+//Uses user from account slice to create a player with their email and username
 export const createOrGetPlayer = createAsyncThunk<Player, Player>(
   "player/createOrReturn",
   async (data: Player, thunkAPI) => {
@@ -41,6 +43,7 @@ export const createOrGetPlayer = createAsyncThunk<Player, Player>(
   }
 );
 
+//Used by Lobby Page Search button to populate game List
 export const getGames = createAsyncThunk<GameState[]>(
   "games/list",
   async (_, thunkAPI) => {
@@ -53,6 +56,7 @@ export const getGames = createAsyncThunk<GameState[]>(
     }
   }
 );
+
 export const getGame = createAsyncThunk<GameState, number>(
   "game/getGame",
   async (data, thunkAPI) => {
@@ -71,7 +75,7 @@ export const createGame = createAsyncThunk<
 >("game/create", async (data, thunkAPI) => {
   try {
     const game = await agent.Game.create(data);
-    console.log(game.id);
+    // console.log(game.id);
 
     localStorage.setItem("game", JSON.stringify(game));
     const player = localStorage.getItem("player") || null;
@@ -109,9 +113,8 @@ export const getUsersInGame = createAsyncThunk<Player[], number>(
   async (data, thunkAPI) => {
     try {
       // alert(data);
-      const inGamePlayers: Player[] = await agent.Game.getPlayersInGame(data);
 
-      return inGamePlayers;
+      return await agent.Game.getPlayersInGame(data);
     } catch (error) {
       return thunkAPI.rejectWithValue({ error: error });
     }
@@ -122,8 +125,23 @@ export const updatePlayer = createAsyncThunk<Player, Player>(
   "player/updatePlayer",
   async (data, thunkAPI) => {
     try {
-      const updatedPlayer: Player = await agent.Player.updatePlayer(data);
-      return updatedPlayer;
+      //  console.log("in PlayerUPDATEPLAYER");
+      await agent.Player.updatePlayer(data);
+      //  console.log(data);
+      //  console.log("was the data");
+      return data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue({ error: error });
+    }
+  }
+);
+
+export const getPlayer = createAsyncThunk<Player, number>(
+  "player/getPlayer",
+  async (data, thunkAPI) => {
+    try {
+      const retrievedPlayer: Player = await agent.Player.getPlayer(data);
+      return retrievedPlayer;
     } catch (error) {
       return thunkAPI.rejectWithValue({ error: error });
     }
@@ -135,35 +153,29 @@ export const winner = createAsyncThunk<
   [GameState, Player]
 >("game/winner", async (data, thunkAPI) => {
   try {
-    const currentPlayer: Player = {
-      userName: data[1].userName,
-      email: data[1].email,
-      id: data[1].id,
-      score: 0,
-      gameStateId: null,
-      nextQuestion: false,
-      ready: false,
-      gameName: "",
-    };
+    await agent.Player.updatePlayer(data[1]);
+    localStorage.setItem("player", JSON.stringify(data[1]));
 
-    await agent.Player.updatePlayer(currentPlayer);
-    localStorage.setItem("player", JSON.stringify(currentPlayer));
-    const currentGameState: GameState = {
-      id: data[0].id,
-      gameName: data[0].gameName,
-
-      status: "Finished",
-      scoreToWin: data[0].scoreToWin,
-      maxPlayers: data[0].maxPlayers,
-      questionIndex: data[0].questionIndex,
-    };
-    localStorage.setItem("game", JSON.stringify(currentGameState));
-    await agent.Game.updateGame(currentGameState);
-    return [currentGameState, currentPlayer];
+    localStorage.setItem("game", JSON.stringify(data[0]));
+    await agent.Game.updateGame(data[0]);
+    return [data[0], data[1]];
   } catch (error) {
     return thunkAPI.rejectWithValue({ error: error });
   }
 });
+
+//the server doesn't return the object on an update so set the store gamestate to the passed in value
+export const updateGame = createAsyncThunk<GameState, GameState>(
+  "game/updateGame",
+  async (data, thunkAPI) => {
+    try {
+      await agent.Game.updateGame(data);
+      return data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue({ error: error });
+    }
+  }
+);
 export const loser = createAsyncThunk<[GameState, Player], [GameState, Player]>(
   "game/loser",
   async (data, thunkAPI) => {
@@ -204,23 +216,27 @@ export const loser = createAsyncThunk<[GameState, Player], [GameState, Player]>(
     }
   }
 );
+
+//used by Lobby page.  Pushes in a gamestate and pulls the data from local storage
 export const joinGame = createAsyncThunk<
-  [GameState, Player[], Player],
-  GameState
+  [Player, GameState],
+  [Player, GameState]
 >("game/joinGame", async (data, thunkAPI) => {
   try {
-    const player = localStorage.getItem("player") || null;
-    let inGamePlayers: Player[] = [];
-    let currentPlayer: Player = {
-      userName: "",
-      email: "",
-      id: 0,
-      score: 0,
-      gameStateId: 0,
-      ready: false,
-      nextQuestion: false,
-      gameName: "",
-    };
+    // const player = localStorage.getItem("player") || null;
+
+    //alert(currentPlayer.gameStateId + " " + currentPlayer.userName);
+    localStorage.setItem("player", JSON.stringify(data));
+    await agent.Player.updatePlayer(data[0]);
+    //alert(returnPlayer.gameStateId + " " + returnPlayer.userName)}
+    //Checking if player and gamestate are null. also check in calling function
+    return data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue({ error: error });
+  }
+});
+
+/*
     if (player) {
       //   const gameState: GameState = JSON.parse(game);
       //  const currentPlayer: Player = JSON.parse(player);
@@ -229,81 +245,82 @@ export const joinGame = createAsyncThunk<
       currentPlayer = JSON.parse(player);
 
       currentPlayer.gameStateId = data.id;
-      //  alert(currentPlayer.gameStateId);
+
       await agent.Player.updateGameState(currentPlayer);
 
       inGamePlayers = await agent.Game.getPlayersInGame(data.id);
-
+      if (!inGamePlayers.includes(currentPlayer))
+        inGamePlayers.push(currentPlayer);
+      alert(inGamePlayers.length + " users");
       localStorage.setItem("game", JSON.stringify(data));
       localStorage.setItem("player", JSON.stringify(currentPlayer));
+    }*/
+//used by Lobby page.  Pushes in a gamestate and pulls the data from local storage
+export const leaveGame = createAsyncThunk<Player, Player>(
+  "game/leaveGame",
+  async (data, thunkAPI) => {
+    try {
+      await agent.Player.updatePlayer(data);
+
+      return data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue({ error: error });
     }
-    return [data, inGamePlayers, currentPlayer];
-  } catch (error) {
-    return thunkAPI.rejectWithValue({ error: error });
   }
-});
+);
 
 export const quizSlice = createSlice({
   name: "quiz",
   initialState,
   reducers: {
     updateUsersInGame: (state, action) => {
-      //alert("in updateusersingame");
-      console.log("in updateusersingame quizslice");
       state.usersInGame = action.payload;
     },
-    leaveGame: (state) => {
-      //if (action.type == "LeaveGame") {
-      // alert(" leaving gme in dispatch");
-      state.gameState = null;
-      if (state.player) {
-        state.player.gameStateId = null;
-        state.player.score = 0;
-        state.player.nextQuestion = false;
-        state.player.ready = false;
+
+    updateUsersInGameWithPlayer: (state, action) => {
+      if (state.usersInGame) {
+        const index: number = state.usersInGame?.findIndex(
+          (user) => user.id == action.payload.id
+        );
+        state.usersInGame[index] = { ...action.payload };
       }
-      // alert(state.player?.gameStateId + " lg");
-      router.navigate("/lobby");
-      //}
+    },
+
+    handleUpdateFromPATGE: (state, action) => {
+      state.usersInGame = action.payload[1];
+      //  if (state.usersInGame) alert(state.usersInGame.length + " length");
+      if (state.usersInGame)
+        state.player =
+          state.usersInGame[
+            state.usersInGame?.findIndex(
+              (player) => player.id == action.payload[0]
+            )
+          ];
     },
   },
   extraReducers: (builder) => {
+    builder.addCase(getPlayer.fulfilled, (state, action) => {
+      state.player = { ...action.payload };
+    });
     builder.addCase(getUsersInGame.fulfilled, (state, action) => {
       state.usersInGame = action.payload;
-
-      const playerUpdate = action.payload.find(
-        (updatedPlayer) => updatedPlayer.id == state.player?.id
-      );
-      if (playerUpdate) state.player = playerUpdate;
     });
-
+    builder.addCase(updateGame.fulfilled, (state, action) => {
+      state.gameState = { ...action.payload };
+    });
     builder.addCase(getGame.fulfilled, (state, action) => {
       state.gameState = { ...action.payload };
     });
     builder.addCase(updatePlayer.fulfilled, (state, action) => {
+      alert("updateplayer");
+      // console.log(action.payload);
       state.player = { ...action.payload };
+      //   console.log("state player ");
+      //   console.log(state.player);
     });
     builder.addCase(winner.fulfilled, (state, action) => {
       state.gameState = { ...action.payload[0] };
       state.player = { ...action.payload[1] };
-
-      /*
-      if (state.player)
-        state.player = {
-          ...state.player,
-          gameStateId: null,
-          gameName: "",
-          score: 0,
-          ready: false,
-          nextQuestion: false,
-        };
-
-      if (state.player) {
-        state.player.gameStateId = null;
-        state.player.score = 0;
-        state.player.nextQuestion = false;
-        state.player.ready = false;
-      }*/
     });
     builder.addCase(loser.fulfilled, (state, action) => {
       state.gameState = { ...action.payload[0] };
@@ -321,11 +338,16 @@ export const quizSlice = createSlice({
       state.player = action.payload;
     });
     builder.addCase(joinGame.fulfilled, (state, action) => {
-      state.gameState = action.payload[0];
+      state.player = { ...action.payload[0] };
+      state.gameState = { ...action.payload[1] };
+      // alert(state.player.userName);
+      // alert(state.gameState);
+    });
+    builder.addCase(leaveGame.fulfilled, (state, action) => {
+      state.player = { ...action.payload };
 
-      state.usersInGame = action.payload[1];
-      //  alert(state.usersInGame.length + "users in game");
-      state.player = action.payload[2];
+      state.usersInGame = [];
+      state.gameState = null;
     });
 
     builder.addCase(createOrGetPlayer.rejected, (state) => {
@@ -339,4 +361,8 @@ export const quizSlice = createSlice({
   },
 });
 
-export const { updateUsersInGame, leaveGame } = quizSlice.actions;
+export const {
+  updateUsersInGameWithPlayer,
+  updateUsersInGame,
+  handleUpdateFromPATGE,
+} = quizSlice.actions;

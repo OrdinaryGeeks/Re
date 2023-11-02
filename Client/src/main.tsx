@@ -10,14 +10,14 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./app/router/Routes.tsx";
 import { store } from "./app/Store/configureStore.ts";
 import { Provider } from "react-redux";
-//import { createSignalRContext } from "react-signalr/signalr";
-
-//const SignalRContext = createSignalRContext();
+import { SignalRProvider } from "./features/signalR/signalRContext.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <Provider store={store}>
-      <RouterProvider router={router} />
-    </Provider>
+    <SignalRProvider>
+      <Provider store={store}>
+        <RouterProvider router={router} />
+      </Provider>
+    </SignalRProvider>
   </React.StrictMode>
 );
