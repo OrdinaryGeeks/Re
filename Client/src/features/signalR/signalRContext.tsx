@@ -1,16 +1,17 @@
 import { createContext, PropsWithChildren } from "react";
-import signalRconnection from "./signalRconnection";
+import { signalRConnector } from "./signalRconnection";
 
 interface SignalRContextValue {
-  connection: signalRconnection;
+  connection: signalRConnector;
 }
 
 export const SignalRContext = createContext<SignalRContextValue>({
-  connection: new signalRconnection(),
+  connection: signalRConnector.getInstance(),
 });
 
 export function SignalRProvider({ children }: PropsWithChildren<unknown>) {
-  const connection = new signalRconnection();
+  const connection = signalRConnector.getInstance();
+
   return (
     <SignalRContext.Provider value={{ connection }}>
       {children}

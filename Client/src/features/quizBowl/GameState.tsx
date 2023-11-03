@@ -5,4 +5,5 @@ export interface GameState {
   scoreToWin: number;
   maxPlayers: number;
   questionIndex: number;
+  buzzedInPlayerId: number;
 }

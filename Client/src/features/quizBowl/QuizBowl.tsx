@@ -10,6 +10,7 @@ import {
   loser,
   updateGame,
   updatePlayer,
+  updateUsersInGame,
   updateUsersInGameWithPlayer,
   winner,
 } from "./quizSlice";
@@ -23,12 +24,12 @@ import { Player } from "./Player";
 export default function QuizBowl() {
   const [questions, setQuestions] = useState<Question[]>([]);
 
-  const [questionIndex, setQI] = useState(0);
+  //const [questionIndex, setQI] = useState(0);
   const [answer, setAnswer] = useState("");
 
   const [isLoading, setLoading] = useState(true);
-  const [buzzedIn, setBuzzIn] = useState(false);
-  const [buzzedInPlayer, setBuzzedInPlayer] = useState("");
+  //const [buzzedIn, setBuzzIn] = useState(false);
+  //const [buzzedInPlayer, setBuzzedInPlayer] = useState("");
   const [gameJoinedOnHub, setGameJoinedOnHub] = useState(false);
   const [startGame, setStartGame] = useState(false);
 
@@ -66,6 +67,7 @@ export default function QuizBowl() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("player added to game event");
     playerAddedToGameEvent((playerTemp: Player, tempGameState: GameState) => {
       //console.log("player added to game event");
       if (playerName == playerTemp.userName) {
@@ -84,7 +86,7 @@ export default function QuizBowl() {
           }
         }
 
-        setQI(tempGameState.questionIndex);
+        //  setQI(tempGameState.questionIndex);
       }
     });
   }, [playerAddedToGameEvent, dispatch, playerName]);
@@ -124,6 +126,7 @@ export default function QuizBowl() {
 
   //This gets called with old values of gameState. Needs to be investigated******
   useEffect(() => {
+    console.log("start game event");
     startGameEvent((gameName: string) => {
       //console.log("start game event");
       if (gameState)
@@ -144,59 +147,73 @@ export default function QuizBowl() {
   //This is called on a correct answer.  Sets buzz in to false for everyone and makes sure we are all on
 
   useEffect(() => {
-    groupScoreEvent((newPlayer: Player) => {
+    console.log("group score event");
+    groupScoreEvent((newPlayer: Player, newUsersInGame: Player[]) => {
       //console.log("group score event");
-      if (playerName == newPlayer.userName) {
-        newPlayer.incorrect = false;
-        dispatch(updatePlayer(newPlayer)).then(() => {
-          if (newPlayer.gameStateId)
-            dispatch(updateUsersInGameWithPlayer(newPlayer));
-        });
-      } else {
-        if (newPlayer.gameStateId)
-          dispatch(updateUsersInGameWithPlayer(newPlayer));
-        if (player) {
-          const tempPlayer: Player = { ...player, incorrect: false };
-          dispatch(updatePlayer(tempPlayer)).then(() => {
-            if (newPlayer.gameStateId)
-              dispatch(updateUsersInGameWithPlayer(tempPlayer));
-          });
-        }
-      }
-
-      setBuzzIn(false);
-
-      setQI((c) => c + 1);
+      if (playerName != newPlayer.userName)
+        dispatch(updateUsersInGame(newUsersInGame));
     });
-  }, [groupScoreEvent, playerName, player, dispatch]);
+
+    // setBuzzIn(false);
+
+    // setQI((c) => c + 1);
+  }, [groupScoreEvent, playerName, dispatch]);
+
+  //console.log(questionIndex + " is qI");
 
   //event handler for handler that will award points then pass to everyone through websocket
   //also triggers winning event if points are over the threshold
   const checkAnswer = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (answer == questions[questionIndex % questions.length].answer) {
-      if (player && gameState) {
-        const newPlayer: Player = {
-          ...player,
-          score:
-            player.score + questions[questionIndex % questions.length].points,
-        };
+    console.log("check Answer");
+    if (gameState)
+      if (
+        answer == questions[gameState.questionIndex % questions.length].answer
+      ) {
+        if (player && gameState) {
+          const newPlayer: Player = {
+            ...player,
+            score:
+              player.score +
+              questions[gameState.questionIndex % questions.length].points,
+            ready: false,
+            incorrect: false,
+            nextQuestion: false,
+          };
 
-        if (
-          player.score + questions[questionIndex % questions.length].points >=
-          gameState.scoreToWin
-        ) {
-          //console.log(gameState);
-          groupWinnerSignal(player, gameState);
-        } else groupScoreSignal(gameState.gameName, newPlayer);
+          if (usersInGame) {
+            const updatedUsers: Player[] = usersInGame?.map((userInGame) => {
+              const tempPlayer: Player = {
+                ...userInGame,
+                ready: false,
+                incorrect: false,
+                nextQuestion: false,
+              };
+              return tempPlayer;
+            });
+            dispatch(updatePlayer(newPlayer)).then(() => {
+              dispatch(updateUsersInGame(updatedUsers));
+
+              dispatch(updateUsersInGameWithPlayer(newPlayer));
+            });
+          }
+
+          if (player.score >= gameState.scoreToWin) {
+            console.log("player enough to win");
+            if (usersInGame) groupWinnerSignal(player, gameState, usersInGame);
+          } else if (usersInGame) {
+            console.log("player score signal");
+            groupScoreSignal(gameState.gameName, newPlayer, usersInGame);
+          }
+        }
+      } else {
+        if (player && gameState)
+          groupIncorrectAnswerSignal(player, gameState.gameName);
       }
-    } else {
-      if (player && gameState)
-        groupIncorrectAnswerSignal(player, gameState.gameName);
-    }
   };
   useEffect(() => {
+    console.log("group incorrect answer event");
     groupIncorrectAnswerEvent((tempPlayer: Player) => {
       //console.log("Incorrect answer event");
       if (playerName) {
@@ -219,6 +236,7 @@ export default function QuizBowl() {
   }, [groupIncorrectAnswerEvent, dispatch, playerName]);
 
   useEffect(() => {
+    console.log("fetch questions");
     fetch(import.meta.env.VITE_API_URL + "/questions")
       .then((response) => response.json())
       .then((data: Question[]) => {
@@ -230,22 +248,17 @@ export default function QuizBowl() {
   }, []);
 
   useEffect(() => {
-    incrementQuestionIndexEvent((tempPlayer: Player, questionIndex: number) => {
-      //console.log("inc question");
-      tempPlayer.incorrect = false;
-      tempPlayer.ready = false;
-
-      dispatch(updatePlayer(tempPlayer)).then(() => {
-        if (tempPlayer.gameStateId)
-          dispatch(updateUsersInGameWithPlayer(tempPlayer));
-      });
-
-      setQI(questionIndex);
-      setBuzzIn(false);
-    });
-  }, [incrementQuestionIndexEvent, dispatch]);
+    console.log("Inc question index");
+    incrementQuestionIndexEvent(
+      (tempPlayer: Player, tempGameState: GameState) => {
+        if (playerName != tempPlayer.userName)
+          dispatch(updateGame(tempGameState));
+      }
+    );
+  }, [incrementQuestionIndexEvent, playerName, dispatch]);
 
   useEffect(() => {
+    console.log("winner event");
     winnerEvent((tempPlayer, tempGameState) => {
       //console.log("winner event");
       if (playerName == tempPlayer.userName) {
@@ -280,7 +293,7 @@ export default function QuizBowl() {
         tempGameState = {
           ...tempGameState,
 
-          status: "Winner",
+          status: "Loser",
         };
         dispatch(loser([tempGameState, tempPlayer])).then(() =>
           router.navigate("/Loser")
@@ -290,27 +303,55 @@ export default function QuizBowl() {
   }, [dispatch, winnerEvent, playerName, navigate]);
 
   useEffect(() => {
-    groupBuzzInEvent((userName) => {
+    console.log("group buzz in effect");
+    groupBuzzInEvent((gameState) => {
       //console.log("Group buzz in event");
-      if (player) {
-        setBuzzedInPlayer(userName);
-        setBuzzIn(true);
-      }
-    });
-  }, [groupBuzzInEvent, player]);
 
+      dispatch(updateGame(gameState));
+      //setBuzzedInPlayer(userName);
+      //setBuzzIn(true);
+    });
+  }, [groupBuzzInEvent, dispatch]);
+
+  function updateGameStateBuzzIn() {
+    if (gameState && player) {
+      const tempGameState: GameState = {
+        ...gameState,
+        buzzedInPlayerId: player.id,
+      };
+      dispatch(updateGame(tempGameState));
+      groupBuzzInSignal(tempGameState);
+    }
+  }
   function incrementSignal() {
     // //console.log("inc signal");
-    if (gameState && player)
-      groupIncrementQuestionIndexSignal(
-        player,
-        gameState.gameName,
-        gameState.id
+    if (gameState && player) {
+      const tempGameState: GameState = {
+        ...gameState,
+        questionIndex: gameState.questionIndex + 1,
+      };
+      dispatch(updateGame(tempGameState));
+      groupIncrementQuestionIndexSignal(player, tempGameState);
+    }
+  }
+
+  function updatePlayerReady(isReady: boolean) {
+    if (player) {
+      const newPlayer: Player = { ...player, ready: isReady };
+      dispatch(updatePlayer(newPlayer)).then(() =>
+        updateUsersInGameWithPlayer(newPlayer)
       );
+    }
   }
 
   let disable: boolean;
-  if (buzzedIn) disable = true;
+  if (gameState?.buzzedInPlayerId != 0) disable = true;
+
+  //if (buzzedIn) disable = true;
+
+  console.log("QuizBowl");
+  console.log(gameState);
+  console.log(player);
   return (
     <Paper elevation={3}>
       <Typography variant="h4" mb="30px" className="generalHeading">
@@ -364,18 +405,18 @@ export default function QuizBowl() {
           </Box>
         )}
       </Box>
-      {startGame && !isLoading && (
+      {startGame && !isLoading && gameState && (
         <QuestionBox
           onClick={incrementSignal}
           questions={questions}
-          questionIndex={questionIndex}
+          questionIndex={gameState.questionIndex}
         />
       )}
       {startGame &&
         usersInGame &&
         gameState &&
         usersInGame.map((mappedPlayer) => (
-          <Box mb="30px">
+          <Box mb="30px" key={mappedPlayer.userName}>
             <Card>
               <Typography className="generalHeading" variant="h6">
                 Player {mappedPlayer.userName}
@@ -392,8 +433,8 @@ export default function QuizBowl() {
                       type="button"
                       disabled={disable}
                       onClick={() => {
-                        groupBuzzInSignal(player.userName, gameState.gameName);
-                        setBuzzIn(true);
+                        updateGameStateBuzzIn();
+                        updatePlayerReady(true);
                       }}
                     >
                       Buzz In
@@ -402,9 +443,8 @@ export default function QuizBowl() {
                 )}
 
               {player &&
-                buzzedIn &&
                 !player.incorrect &&
-                buzzedInPlayer == mappedPlayer.userName &&
+                gameState.buzzedInPlayerId == mappedPlayer.id &&
                 mappedPlayer.userName == player.userName && (
                   <Box className="buttonBox">
                     <Box component="form" onSubmit={(e) => checkAnswer(e)}>

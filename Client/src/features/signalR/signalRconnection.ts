@@ -4,7 +4,7 @@ import { Player } from "../quizBowl/Player";
 
 const hubURL = import.meta.env.VITE_HUB_URL;
 
-export default class signalRConnector {
+export class signalRConnector {
   private connection: signalR.HubConnection;
 
   public playerAddedToGameEvent: (
@@ -13,14 +13,16 @@ export default class signalRConnector {
 
   public startGameEvent: (onStartGame: (gameName: string) => void) => void;
 
-  public groupBuzzInEvent: (onGroupBuzzIn: (userName: string) => void) => void;
+  public groupBuzzInEvent: (
+    onGroupBuzzIn: (gameState: GameState) => void
+  ) => void;
 
   public groupScoreEvent: (
-    onGroupCorrectAnswer: (player: Player) => void
+    onGroupCorrectAnswer: (player: Player, usersInGame: Player[]) => void
   ) => void;
 
   public incrementQuestionIndexEvent: (
-    onIncrementQuestionIndex: (player: Player, questionIndex: number) => void
+    onIncrementQuestionIndex: (player: Player, gameState: GameState) => void
   ) => void;
 
   public playerReadyEvent: (onPlayerReady: (userID: number) => void) => void;
@@ -31,7 +33,11 @@ export default class signalRConnector {
   ) => void;
 
   public winnerEvent: (
-    onWinner: (player: Player, gameState: GameState) => void
+    onWinner: (
+      player: Player,
+      gameState: GameState,
+      usersInGame: Player[]
+    ) => void
   ) => void;
 
   public leaveGameEvent: (onLeaveGame: (gameName: string) => void) => void;
@@ -45,17 +51,15 @@ export default class signalRConnector {
       .withUrl(hubURL)
       .withAutomaticReconnect()
       .build();
-    // alert("In constructor");
     this.connection
       .start()
-      // .then(() => alert("connectionStartedafef"))
 
       .catch((err) => document.write(err));
 
     //Fired when you create a game or a player joins the game
     this.playerAddedToGameEvent = (onPlayerAddedToGame) => {
       this.connection.on("playerAddedToGame", (player, gameState) => {
-        alert("player added to game");
+        console.log("player adeded to game signalrcon");
         onPlayerAddedToGame(player, gameState);
       });
     };
@@ -76,30 +80,30 @@ export default class signalRConnector {
 
     //fired when client buzzes in and blocks other users from also buzzing in
     this.groupBuzzInEvent = (onGroupBuzzIn) => {
-      this.connection.on("groupBuzzIn", (userName) => {
-        onGroupBuzzIn(userName);
+      this.connection.on("groupBuzzIn", (gameState) => {
+        onGroupBuzzIn(gameState);
       });
     };
 
     //Fired after correct score given on client.returns passed in player for other
     //clients to update their usersInGame
     this.groupScoreEvent = (onGroupCorrectAnswer) => {
-      this.connection.on("Group Correct Answer", (player) => {
-        onGroupCorrectAnswer(player);
+      this.connection.on("Group Correct Answer", (player, usersInGame) => {
+        onGroupCorrectAnswer(player, usersInGame);
       });
     };
 
     //Fired when a player accumulates enough points to win terminating their game
     //Winners and losers go to different pages
     this.winnerEvent = (onWinner) => {
-      this.connection.on("Winner", (player, gameState) => {
-        onWinner(player, gameState);
+      this.connection.on("Winner", (player, gameState, usersInGame) => {
+        onWinner(player, gameState, usersInGame);
       });
     };
 
     this.incrementQuestionIndexEvent = (onIncrementQuestionIndex) => {
-      this.connection.on("incrementQuestionIndex", (player, questionIndex) => {
-        onIncrementQuestionIndex(player, questionIndex);
+      this.connection.on("incrementQuestionIndex", (player, gameState) => {
+        onIncrementQuestionIndex(player, gameState);
       });
     };
 
@@ -135,7 +139,7 @@ export default class signalRConnector {
   };
 
   public createOrJoinGroupSignal = (gameState: GameState, player: Player) => {
-    alert("sending cjgs");
+    console.log("sending create or join group signal from signalrconn");
     console.log(player);
     console.log(gameState);
     this.connection.send("CreateOrJoinGame", gameState, player);
@@ -152,24 +156,31 @@ export default class signalRConnector {
   ) => {
     this.connection.send("LeaveGame", gameName, userName, userID);
   };
-  public groupBuzzInSignal = (userName: string, gameName: string) => {
-    this.connection.send("groupBuzzIn", userName, gameName);
+  public groupBuzzInSignal = (gameState: GameState) => {
+    this.connection.send("groupBuzzIn", gameState);
   };
 
-  public groupScoreSignal = (gameName: string, player: Player) => {
-    this.connection.send("GroupScoreSignal", gameName, player);
+  public groupScoreSignal = (
+    gameName: string,
+    player: Player,
+    usersInGame: Player[]
+  ) => {
+    this.connection.send("GroupScoreSignal", gameName, player, usersInGame);
   };
 
-  public groupWinnerSignal = (player: Player, gameState: GameState) => {
-    this.connection.send("GroupWinner", player, gameState);
+  public groupWinnerSignal = (
+    player: Player,
+    gameState: GameState,
+    usersInGame: Player[]
+  ) => {
+    this.connection.send("GroupWinner", player, gameState, usersInGame);
   };
 
   public groupIncrementQuestionIndexSignal = (
     player: Player,
-    gameName: string,
-    gameID: number
+    gameState: GameState
   ) => {
-    this.connection.send("IncrementQuestionIndex", gameName, player, gameID);
+    this.connection.send("IncrementQuestionIndex", gameState, player);
   };
 
   public gameCheckSignal = (
@@ -197,8 +208,9 @@ export default class signalRConnector {
   public static getInstance(): signalRConnector {
     if (!signalRConnector.instance)
       signalRConnector.instance = new signalRConnector();
+
     //signalRConnector.instance.connection.state
     return signalRConnector.instance;
   }
 }
-//export default signalRConnector.getInstance;
+export default signalRConnector.getInstance;

@@ -38,17 +38,6 @@ namespace API.Hubs
         }
 
 
-//unused implementation
-public async Task GameCheckSignal(string gameName, string userName, int gameID)
-{
-
-    GameState game =_context.GameStates.Find(gameID);
-    game.Status = "Checking";
-    await _context.SaveChangesAsync();
-
-await Clients.Groups(gameName).SendAsync("GameCheck");
-
-}
 
 //send group start message
     public async Task StartGame(string gameName)
@@ -56,36 +45,9 @@ await Clients.Groups(gameName).SendAsync("GameCheck");
         await Clients.Groups(gameName).SendAsync("StartGame", gameName);
     }
 
-    //unused implementation
-        public async Task PlayerReadySignal(string gameName, int userID)
-        {
+  
 
-            Player player = _context.Players.Find(userID);
-
-            player.Ready = true;
-            await _context.SaveChangesAsync();
-
-            await  Clients.Groups(gameName).SendAsync("playerReady", userID);
-
-
-
-        }
-
-
-        //unused implementation
-        public async Task PlayerNotReadySignal(string gameName, int userID)
-        {
-
-            Player player = _context.Players.Find(userID);
-
-            player.Ready = false;
-            await _context.SaveChangesAsync();
-
-            await  Clients.Groups(gameName).SendAsync("playerNotReady");
-
-
-
-        }
+  
         public  async Task CreateOrJoinGame(GameState gameState,  Player player)
     {
          
@@ -112,37 +74,32 @@ await Clients.Groups(gameName).SendAsync("GameCheck");
 
 //option to go to the next question. store the questionindex on the server?? cant remember why i didnt take
 //this out but its late and im posting this code
-    public async Task IncrementQuestionIndex(string gameName, Player player, int gameID)
+    public async Task IncrementQuestionIndex(GameState gameState, Player player)
         {
 
-            GameState game = _context.GameStates.Find(gameID);
 
-            game.QuestionIndex++;
-
-            await _context.SaveChangesAsync();
-
-            await Clients.Groups(gameName).SendAsync("incrementQuestionIndex", player, game.QuestionIndex);
+            await Clients.Groups(gameState.GameName).SendAsync("incrementQuestionIndex", player, gameState);
             
 
         }
   
 
 //set the buzzin event and user so that only one person can enter an answer at a time
-    public async Task GroupBuzzIn(string user, string gameName)
+    public async Task GroupBuzzIn(GameState gameState)
     {
-        await Clients.Group(gameName).SendAsync("groupBuzzIn", user);
+        await Clients.Group(gameState.GameName).SendAsync("groupBuzzIn", gameState);
     }
  
 
  //used to send a score signal with accompanying lucky player for updates.
  //program uses a static update for the usersingame array
-      public async Task GroupScoreSignal(string gameName, Player player)
+      public async Task GroupScoreSignal(string gameName, Player player, Player[] usersInGame)
     {
           
        
      
         
-        await Clients.Groups(gameName).SendAsync("Group Correct Answer", player);
+        await Clients.Groups(gameName).SendAsync("Group Correct Answer", player, usersInGame);
 
         
     }

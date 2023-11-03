@@ -4,9 +4,12 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Models
 {
+
+    [Index(nameof(GameName), IsUnique =true)]
     public class GameState
     {
 
@@ -16,6 +19,8 @@ namespace API.Models
      
     public int Id{get;set;}
     
+
+       
       public string   GameName{get;set;}
        public string Status{get;set;}
 
@@ -24,6 +29,8 @@ namespace API.Models
         public int MaxPlayers{get;set;}
 
         public int QuestionIndex{get;set;}
+
+        public int BuzzedInPlayerId{get;set;}
 
        
 

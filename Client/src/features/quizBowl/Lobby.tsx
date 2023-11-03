@@ -9,6 +9,7 @@ import GameInfo from "./GameInfo";
 import PlayerDetails from "./PlayerDetails";
 import PlayerHandle from "./PlayerHandle";
 import GameDetails from "./GameDetails";
+import { toast } from "react-toastify";
 
 export default function Lobby() {
   const { user } = useAppSelector((state) => state.account);
@@ -17,9 +18,22 @@ export default function Lobby() {
   const [finished, setFinished] = useState(false);
   const dispatch = useAppDispatch();
   const [showGameList, setShowGameList] = useState(false);
+  //const [dupeGameName, setDupeGameName] = useState(false);
   useEffect(() => {
+    console.log("check Login");
     if (!user) navigate("/Login");
   });
+
+  useEffect(() => {
+    console.log("Dupe game");
+    if (gameState)
+      if (gameState.gameName == "Duplicate Game Created") {
+        //    setDupeGameName(true);
+        toast.error("Duplicate Game Name");
+      } else {
+        //    setDupeGameName(false);
+      }
+  }, [gameState]);
 
   let ToggleText: string = "Show Game List";
   if (showGameList) ToggleText = "Dont Show Game List";
@@ -40,6 +54,7 @@ export default function Lobby() {
   }
 
   useEffect(() => {
+    console.log("UE setFinished");
     if (gameState) setFinished(gameState.status == "Finished" ? true : false);
   }, [gameState]);
 
@@ -55,9 +70,12 @@ export default function Lobby() {
 
   //always load the games on page reload
   useEffect(() => {
+    console.log("UE getgames");
     if (player) dispatch(getGames());
   }, [player, dispatch]);
 
+  console.log(player);
+  console.log(gameState);
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -72,6 +90,7 @@ export default function Lobby() {
         <Box pr="20px" pl="20px" mb="30px">
           {player && <PlayerDetails />}
         </Box>
+        {}
         {gameState && finished && <GameInfo finished={finished} />}
         {gameState && !finished && <GameInfo finished={finished} />}
         {gameState && (
@@ -104,7 +123,7 @@ export default function Lobby() {
         {gameList && showGameList && (
           <Box>
             {gameList.map((gameFromList: GameState) => (
-              <GameDetails game={gameFromList} />
+              <GameDetails key={gameFromList.gameName} game={gameFromList} />
             ))}
           </Box>
         )}

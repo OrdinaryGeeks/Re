@@ -4,6 +4,7 @@ using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(QuizBowlContext))]
-    partial class QuizBowlContextModelSnapshot : ModelSnapshot
+    [Migration("20231103100208_UniqueOnGameName")]
+    partial class UniqueOnGameName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -29,9 +32,6 @@ namespace API.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BuzzedInPlayerId")
-                        .HasColumnType("int");
 
                     b.Property<string>("GameName")
                         .HasColumnType("nvarchar(450)");
@@ -216,13 +216,13 @@ namespace API.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "762f010a-4eef-4900-a660-2c4e4b70df4c",
+                            Id = "49b88b17-0bec-4a51-b80b-e4e41eef6615",
                             Name = "Member",
                             NormalizedName = "MEMBER"
                         },
                         new
                         {
-                            Id = "1c484f97-196e-41fd-a8f3-f9629d354a89",
+                            Id = "c4d4c56b-ee45-4b20-b720-4a5080a48179",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });

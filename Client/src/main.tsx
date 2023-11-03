@@ -14,10 +14,10 @@ import { SignalRProvider } from "./features/signalR/signalRContext.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <SignalRProvider>
-      <Provider store={store}>
+    <Provider store={store}>
+      <SignalRProvider>
         <RouterProvider router={router} />
-      </Provider>
-    </SignalRProvider>
+      </SignalRProvider>
+    </Provider>
   </React.StrictMode>
 );
