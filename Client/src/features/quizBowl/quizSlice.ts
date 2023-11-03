@@ -9,6 +9,7 @@ interface QuizState {
   player: Player | null;
   usersInGame: Player[] | null;
   gameList: GameState[] | null;
+  errorInQuizSlice: string;
 }
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 const initialState: QuizState = {
@@ -16,6 +17,7 @@ const initialState: QuizState = {
   player: null,
   gameList: null,
   usersInGame: [],
+  errorInQuizSlice: "",
 };
 
 //Uses user from account slice to create a player with their email and username
@@ -24,8 +26,8 @@ export const createOrGetPlayer = createAsyncThunk<Player, Player>(
   async (data: Player, thunkAPI) => {
     try {
       const player = await agent.Player.createOrReturn(data);
-      console.log(player);
-      console.log("is the player");
+      //console.log(player);
+      //console.log("is the player");
       const currentPlayer: Player = {
         ...player,
 
@@ -36,12 +38,12 @@ export const createOrGetPlayer = createAsyncThunk<Player, Player>(
         gameName: "",
       };
 
-      console.log(currentPlayer);
+      //console.log(currentPlayer);
       await agent.Player.updatePlayer(currentPlayer);
       const getThePlayer: Player = await agent.Player.getPlayer(
         currentPlayer.id
       );
-      console.log(getThePlayer);
+      // console.log(getThePlayer);
       return getThePlayer;
     } catch (error) {
       return thunkAPI.rejectWithValue({ error: error });
@@ -76,13 +78,41 @@ export const getGame = createAsyncThunk<GameState, number>(
   }
 );
 
+export const updatePlayerForNextQuestion = createAsyncThunk<Player, Player>(
+  "player/prepare",
+  async (data, thunkAPI) => {
+    try {
+      const newPlayer: Player = {
+        ...data,
+        ready: false,
+        incorrect: false,
+      };
+      await agent.Player.updatePlayer(newPlayer);
+      //  console.log(data);
+      //  console.log("was the data");
+      return newPlayer;
+    } catch (error) {
+      return thunkAPI.rejectWithValue({ error: error });
+    }
+  }
+);
 //used by Lobby page.  Pushes in a gamestate and pulls the data from local storage
 export const joinGame = createAsyncThunk<
   [Player, GameState],
   [Player, GameState]
 >("game/joinGame", async (data, thunkAPI) => {
   try {
-    const newPlayer: Player = await agent.Player.updatePlayer(data[0]);
+    // console.log(data[0]);
+    //console.log(data[1]);
+    //console.log("join game");
+    const newPlayer: Player = {
+      ...data[0],
+      gameStateId: data[1].id,
+      gamesJoined: data[1].gameName + ";",
+    };
+    //  console.log(newPlayer);
+    await agent.Player.updatePlayer(newPlayer);
+    // console.log(newPlayer);
     return [newPlayer, data[1]];
   } catch (error) {
     return thunkAPI.rejectWithValue({ error: error });
@@ -90,17 +120,13 @@ export const joinGame = createAsyncThunk<
 });
 
 export const createGame = createAsyncThunk<
-  [GameState, Player[], Player],
+  [GameState, Player[], Player, string],
   GameState
 >("game/create", async (data, thunkAPI) => {
   try {
-    const game = await agent.Game.create(data);
-    // console.log(game.id);
-
-    localStorage.setItem("game", JSON.stringify(game));
+    const game: GameState = await agent.Game.create(data);
 
     const player = localStorage.getItem("player") || null;
-
     let currentPlayer: Player = {
       userName: "",
       email: "",
@@ -113,7 +139,19 @@ export const createGame = createAsyncThunk<
       incorrect: false,
       gamesJoined: "",
     };
+    let inGamePlayers: Player[] = [];
+
     if (player) {
+      currentPlayer = JSON.parse(player);
+      if (game.gameName == "Duplicate Game Created") {
+        const errorInCreate: string = "Duplicate Game Created";
+        //inGamePlayers.push(currentPlayer);
+        return [game, inGamePlayers, currentPlayer, errorInCreate];
+      }
+      // console.log(game.id);
+
+      localStorage.setItem("game", JSON.stringify(game));
+
       //   const gameState: GameState = JSON.parse(game);
       //  const currentPlayer: Player = JSON.parse(player);
       //  if (gameState.players.find((x) => x == currentPlayer) == undefined)
@@ -124,9 +162,9 @@ export const createGame = createAsyncThunk<
       //  alert(currentPlayer.gameStateId);
       await agent.Player.updateGameState(currentPlayer);
     }
-    let inGamePlayers: Player[] = [];
+
     inGamePlayers = await agent.Game.getPlayersInGame(data.id);
-    return [game, inGamePlayers, currentPlayer];
+    return [game, inGamePlayers, currentPlayer, ""];
   } catch (error) {
     return thunkAPI.rejectWithValue({ error: error });
   }
@@ -230,6 +268,7 @@ export const loser = createAsyncThunk<[GameState, Player], [GameState, Player]>(
         scoreToWin: data[0].scoreToWin,
         maxPlayers: data[0].maxPlayers,
         questionIndex: data[0].questionIndex,
+        //  buzzedInPlayerId: data[0].buzzedInPlayerId,
       };
       localStorage.setItem("game", JSON.stringify(currentGameState));
       await agent.Game.updateGame(currentGameState);
@@ -272,6 +311,10 @@ export const quizSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    builder.addCase(updatePlayerForNextQuestion.fulfilled, (state, action) => {
+      state.player = action.payload;
+      localStorage.setItem("player", JSON.stringify(state.player));
+    });
     builder.addCase(getPlayer.fulfilled, (state, action) => {
       state.player = { ...action.payload };
       if (state.player)
@@ -305,14 +348,22 @@ export const quizSlice = createSlice({
       // router.navigate("/Loser");
     });
     builder.addCase(createGame.fulfilled, (state, action) => {
-      state.gameState = { ...action.payload[0] };
+      if (action.payload[3] == "Duplicate Game Created") {
+        state.errorInQuizSlice = "Duplicate Game Created";
+        state.gameState = null;
+      } else {
+        state.gameState = { ...action.payload[0] };
+        state.errorInQuizSlice = "";
+      }
       state.usersInGame = action.payload[1];
       state.player = { ...action.payload[2] };
 
       if (state.player)
         localStorage.setItem("player", JSON.stringify(state.player));
 
-      router.navigate("/Game");
+      if (state.errorInQuizSlice != "Duplicate Game Created")
+        router.navigate("/Game");
+      else state.gameState = null;
     });
     builder.addCase(createOrGetPlayer.fulfilled, (state, action) => {
       state.player = action.payload;
@@ -324,6 +375,8 @@ export const quizSlice = createSlice({
       if (state.player)
         localStorage.setItem("player", JSON.stringify(state.player));
       state.gameState = { ...action.payload[1] };
+
+      router.navigate("/Game");
       // alert(state.player.userName);
       // alert(state.gameState);
     });

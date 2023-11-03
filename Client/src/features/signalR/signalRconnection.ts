@@ -55,7 +55,7 @@ export default class signalRConnector {
     //Fired when you create a game or a player joins the game
     this.playerAddedToGameEvent = (onPlayerAddedToGame) => {
       this.connection.on("playerAddedToGame", (player, gameState) => {
-        alert("player added to game");
+        //  alert("player added to game");
         onPlayerAddedToGame(player, gameState);
       });
     };
@@ -135,11 +135,11 @@ export default class signalRConnector {
   };
 
   public createOrJoinGroupSignal = (gameState: GameState, player: Player) => {
-    alert("sending cjgs");
-    console.log(player);
-    console.log(gameState);
+    // alert("sending cjgs");
+    //console.log(player);
+    // console.log(gameState);
     this.connection.send("CreateOrJoinGame", gameState, player);
-    console.log("after sending");
+    // console.log("after sending");
   };
 
   public startGameSignal = (gameName: string) => {

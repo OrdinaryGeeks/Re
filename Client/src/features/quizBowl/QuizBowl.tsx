@@ -10,6 +10,7 @@ import {
   loser,
   updateGame,
   updatePlayer,
+  updatePlayerForNextQuestion,
   updateUsersInGameWithPlayer,
   winner,
 } from "./quizSlice";
@@ -63,9 +64,32 @@ export default function QuizBowl() {
   const dispatch = useAppDispatch();
 
   const playerName = useMemo(() => player?.userName, [player?.userName]);
+  /* const relevantPlayerDetails = useMemo(
+    () => [
+      player?.email,
+      player?.gameName,
+      player?.gameStateId,
+      player?.gamesJoined,
+      player?.incorrect,
+      player?.nextQuestion,
+      player?.ready,
+      player?.userName,
+    ],
+    [
+      player?.email,
+      player?.gameName,
+      player?.gameStateId,
+      player?.gamesJoined,
+      player?.incorrect,
+      player?.nextQuestion,
+      player?.ready,
+      player?.userName,
+    ]
+  ); */
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("player added to game event");
     playerAddedToGameEvent((playerTemp: Player, tempGameState: GameState) => {
       //console.log("player added to game event");
       if (playerName == playerTemp.userName) {
@@ -96,7 +120,8 @@ export default function QuizBowl() {
         ...player,
         //  gamesJoined: player.gamesJoined + gameState.gameName + ";",
       };
-
+      //   console.log(gameState);
+      // console.log(player);
       createOrJoinGroupSignal(gameState, tempPlayer);
     }
   }
@@ -124,6 +149,7 @@ export default function QuizBowl() {
 
   //This gets called with old values of gameState. Needs to be investigated******
   useEffect(() => {
+    console.log("start game event");
     startGameEvent((gameName: string) => {
       //console.log("start game event");
       if (gameState)
@@ -144,6 +170,10 @@ export default function QuizBowl() {
   //This is called on a correct answer.  Sets buzz in to false for everyone and makes sure we are all on
 
   useEffect(() => {
+    console.log("checking group score event dependency");
+  }, [groupScoreEvent]);
+  useEffect(() => {
+    console.log("group score event");
     groupScoreEvent((newPlayer: Player) => {
       //console.log("group score event");
       if (playerName == newPlayer.userName) {
@@ -155,11 +185,10 @@ export default function QuizBowl() {
       } else {
         if (newPlayer.gameStateId)
           dispatch(updateUsersInGameWithPlayer(newPlayer));
-        if (player) {
-          const tempPlayer: Player = { ...player, incorrect: false };
-          dispatch(updatePlayer(tempPlayer)).then(() => {
+        {
+          dispatch(updatePlayerForNextQuestion(newPlayer)).then(() => {
             if (newPlayer.gameStateId)
-              dispatch(updateUsersInGameWithPlayer(tempPlayer));
+              dispatch(updateUsersInGameWithPlayer(newPlayer));
           });
         }
       }
@@ -168,7 +197,7 @@ export default function QuizBowl() {
 
       setQI((c) => c + 1);
     });
-  }, [groupScoreEvent, playerName, player, dispatch]);
+  }, [groupScoreEvent, playerName, dispatch]);
 
   //event handler for handler that will award points then pass to everyone through websocket
   //also triggers winning event if points are over the threshold
@@ -197,6 +226,7 @@ export default function QuizBowl() {
     }
   };
   useEffect(() => {
+    console.log("group incorrect answer event");
     groupIncorrectAnswerEvent((tempPlayer: Player) => {
       //console.log("Incorrect answer event");
       if (playerName) {
@@ -219,6 +249,7 @@ export default function QuizBowl() {
   }, [groupIncorrectAnswerEvent, dispatch, playerName]);
 
   useEffect(() => {
+    console.log("fetch questions");
     fetch(import.meta.env.VITE_API_URL + "/questions")
       .then((response) => response.json())
       .then((data: Question[]) => {
@@ -230,6 +261,7 @@ export default function QuizBowl() {
   }, []);
 
   useEffect(() => {
+    console.log("Inc question index");
     incrementQuestionIndexEvent((tempPlayer: Player, questionIndex: number) => {
       //console.log("inc question");
       tempPlayer.incorrect = false;
@@ -246,6 +278,7 @@ export default function QuizBowl() {
   }, [incrementQuestionIndexEvent, dispatch]);
 
   useEffect(() => {
+    console.log("winner event");
     winnerEvent((tempPlayer, tempGameState) => {
       //console.log("winner event");
       if (playerName == tempPlayer.userName) {
@@ -277,12 +310,12 @@ export default function QuizBowl() {
           ready: false,
           gameName: "",
         };
-        tempGameState = {
+        const newTempGameState = {
           ...tempGameState,
 
-          status: "Winner",
+          status: "Loser",
         };
-        dispatch(loser([tempGameState, tempPlayer])).then(() =>
+        dispatch(loser([newTempGameState, tempPlayer])).then(() =>
           router.navigate("/Loser")
         );
       }
@@ -290,14 +323,15 @@ export default function QuizBowl() {
   }, [dispatch, winnerEvent, playerName, navigate]);
 
   useEffect(() => {
+    console.log("group buzz in");
     groupBuzzInEvent((userName) => {
       //console.log("Group buzz in event");
-      if (player) {
+      if (playerName == userName) {
         setBuzzedInPlayer(userName);
         setBuzzIn(true);
       }
     });
-  }, [groupBuzzInEvent, player]);
+  }, [groupBuzzInEvent, playerName]);
 
   function incrementSignal() {
     // //console.log("inc signal");
@@ -311,6 +345,10 @@ export default function QuizBowl() {
 
   let disable: boolean;
   if (buzzedIn) disable = true;
+
+  //console.log("QuizBowl");
+  //console.log(gameState);
+  //console.log(player);
   return (
     <Paper elevation={3}>
       <Typography variant="h4" mb="30px" className="generalHeading">
@@ -375,7 +413,7 @@ export default function QuizBowl() {
         usersInGame &&
         gameState &&
         usersInGame.map((mappedPlayer) => (
-          <Box mb="30px">
+          <Box key={mappedPlayer.userName} mb="30px">
             <Card>
               <Typography className="generalHeading" variant="h6">
                 Player {mappedPlayer.userName}

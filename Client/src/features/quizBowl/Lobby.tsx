@@ -40,7 +40,12 @@ export default function Lobby() {
   }
 
   useEffect(() => {
-    if (gameState) setFinished(gameState.status == "Finished" ? true : false);
+    if (gameState)
+      setFinished(
+        gameState.status == "Winner" || gameState.status == "Loser"
+          ? true
+          : false
+      );
   }, [gameState]);
 
   //Used Toggle Show Game List to display Games List
@@ -74,7 +79,7 @@ export default function Lobby() {
         </Box>
         {gameState && finished && <GameInfo finished={finished} />}
         {gameState && !finished && <GameInfo finished={finished} />}
-        {gameState && (
+        {gameState && !finished && (
           <Button
             type="submit"
             fullWidth
@@ -86,7 +91,7 @@ export default function Lobby() {
           </Button>
         )}
         {player == null && <PlayerHandle />}
-        {player && !gameState && (
+        {player && (!gameState || finished) && (
           <NavLink to="/CreateGame">
             <Typography variant="h6">Create Game</Typography>
           </NavLink>
@@ -104,7 +109,7 @@ export default function Lobby() {
         {gameList && showGameList && (
           <Box>
             {gameList.map((gameFromList: GameState) => (
-              <GameDetails game={gameFromList} />
+              <GameDetails key={gameFromList.gameName} game={gameFromList} />
             ))}
           </Box>
         )}

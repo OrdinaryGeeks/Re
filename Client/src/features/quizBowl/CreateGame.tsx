@@ -4,6 +4,10 @@ import { createGame } from "./quizSlice";
 import { useAppDispatch } from "../../app/Store/configureStore";
 import { GameState } from "./GameState";
 import { NavLink } from "react-router-dom";
+import { useAppSelector } from "../../app/Store/configureStore";
+import { useEffect } from "react";
+import { toast } from "react-toastify";
+
 export default function CreateGame() {
   const {
     register,
@@ -14,7 +18,12 @@ export default function CreateGame() {
     mode: "onTouched",
   });
   const dispatch = useAppDispatch();
+  const { errorInQuizSlice } = useAppSelector((state) => state.quiz);
 
+  useEffect(() => {
+    if (errorInQuizSlice == "Duplicate Game Created")
+      toast.error("Duplicate Game Created");
+  }, [errorInQuizSlice]);
   async function MakeGame() {
     const gameValues = getValues();
 
@@ -27,7 +36,6 @@ export default function CreateGame() {
       id: 0,
       questionIndex: 0,
     };
-
     await dispatch(createGame(userGame));
   }
 

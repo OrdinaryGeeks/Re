@@ -96,11 +96,20 @@ namespace API.Controllers
         public async Task<ActionResult<GameState>> PostGameState(GameState gameState)
         {
 
-          //  GameState newGameState = new GameState(){GameName=gameState.GameName, MaxPlayers=gameState.MaxPlayers, ScoreToWin=gameState.ScoreToWin, Status=gameState.Status};
+            
+
+            if(_context.GameStates.Any(inDBGameState => (inDBGameState.GameName == gameState.GameName)))
+            {
+            GameState errorGameState = new GameState{GameName="Duplicate Game Created", Id=-1, MaxPlayers=0, QuestionIndex=0, ScoreToWin=0, Status="Dupe"};
+            return CreatedAtAction("PostGameState", new {gameName = "Duplicate Game Created"}, errorGameState);
+
+            }
+
+
             _context.GameStates.Add(gameState);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetGameState", new { id = gameState.Id }, gameState);
+            return CreatedAtAction("PostGameState", new { id = gameState.Id }, gameState);
         }
 
         // DELETE: api/Games/5
