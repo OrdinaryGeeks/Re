@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 import App from "../../App";
 import HomePage from "../../features/home/HomePage";
 import AboutPage from "../../features/about/AboutPage";
@@ -11,6 +11,8 @@ import Lobby from "../../features/quizBowl/Lobby";
 import CreateGame from "../../features/quizBowl/CreateGame";
 import Winner from "../../features/quizBowl/Winner";
 import Loser from "../../features/quizBowl/Loser";
+import NotFound from "../errors/NotFound";
+import ServerError from "../errors/ServerError";
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +29,11 @@ export const router = createBrowserRouter([
       { path: "/createGame", element: <CreateGame /> },
       { path: "/winner", element: <Winner /> },
       { path: "/loser", element: <Loser /> },
+      { path: "/server-error", element: <ServerError /> },
+      { path: "/not-found", element: <NotFound /> },
+
+      { path: "/register", element: <Register /> },
+      { path: "*", element: <Navigate replace to="/not-found" /> },
     ],
   },
 ]);

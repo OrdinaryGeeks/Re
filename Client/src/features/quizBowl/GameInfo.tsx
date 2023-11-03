@@ -22,6 +22,9 @@ export default function GameInfo({ finished }: Props) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
+  //mouse handler that will disassociate the player from gameState information
+  //need to hook up signalr connection to alert other users
+
   function LeaveGame() {
     if (player) {
       const newPlayer: Player = {
@@ -77,9 +80,6 @@ export default function GameInfo({ finished }: Props) {
             </Typography>
             <Typography variant="h6" className="cardHeadingDetails">
               Target Score: {gameState.scoreToWin}
-            </Typography>
-            <Typography variant="h6" className="cardHeadingDetails">
-              Max Players: {gameState.maxPlayers}
             </Typography>
           </Card>
         </Box>

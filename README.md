@@ -30,3 +30,11 @@ This project uses signalR websockets and a react front end to simulate a simple 
 - Prettify
 
 - Build front end tools to add questions/answers
+
+- Persist information instead of local storage
+
+#CODE
+
+The quizbowl is kind of heavy. The signalR example I used triggers events that can cause dependency rerenders. Also had instances of stale state that needed an update to show. Walked away from a timer for the time being.
+
+In Quizbowl the important events precede the function that calls them. I also tried to order them by logical execution in the signalRConnection file and quizbowl.

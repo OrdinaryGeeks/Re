@@ -7,4 +7,6 @@ export interface Player {
   ready: boolean;
   nextQuestion: boolean;
   gameName: string | null;
+  incorrect: boolean;
+  gamesJoined: string;
 }

@@ -60,15 +60,7 @@ export default function CreateGame() {
           })}
           error={!!errors.targetScore}
         />
-        <TextField
-          margin="normal"
-          fullWidth
-          label="Max Players"
-          {...register("maxPlayers", {
-            required: "Max Players is Required",
-          })}
-          error={!!errors.maxPlayers}
-        />
+
         <Button
           type="submit"
           fullWidth

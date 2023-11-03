@@ -1,5 +1,4 @@
-import { Container, CssBaseline, Box, Card } from "@mui/material";
-import Typography from "@mui/material/Typography";
+import { Box, Container, CssBaseline, Paper } from "@mui/material";
 
 export default function AboutPage() {
   return (
@@ -13,13 +12,10 @@ export default function AboutPage() {
           alignItems: "center",
         }}
       >
-        <Typography variant="h6">Ordinary Geeks React Site</Typography>
-
-        <Card sx={{ marginTop: 10 }}>
-          This is a React application that uses Signal R to allow players to
-          join a quizbowl match. A .Net Web Api serves up questions and users
-          can buzz in first and be the first to answer
-        </Card>
+        <Paper>
+          Ordinary Geeks was officially founded in 2020. It specializes in full
+          stack development of .Net Core websites.
+        </Paper>
       </Box>
     </Container>
   );

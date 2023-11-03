@@ -11,7 +11,7 @@ export default class signalRConnector {
     onPlayerAddedToGame: (player: Player, gameState: GameState) => void
   ) => void;
 
-  public startGameEvent: (onStartGame: () => void) => void;
+  public startGameEvent: (onStartGame: (gameName: string) => void) => void;
 
   public groupBuzzInEvent: (onGroupBuzzIn: (userName: string) => void) => void;
 
@@ -20,17 +20,19 @@ export default class signalRConnector {
   ) => void;
 
   public incrementQuestionIndexEvent: (
-    onIncrementQuestionIndex: (questionIndex: number) => void
+    onIncrementQuestionIndex: (player: Player, questionIndex: number) => void
   ) => void;
 
   public playerReadyEvent: (onPlayerReady: (userID: number) => void) => void;
   public playerNotReadyEvent: (onPlayerNotReady: () => void) => void;
 
   public groupIncorrectAnswerEvent: (
-    onGroupCorrectAnswer: (userName: string) => void
+    onGroupInCorrectAnswer: (player: Player) => void
   ) => void;
 
-  public winnerEvent: (onWinner: (userName: string) => void) => void;
+  public winnerEvent: (
+    onWinner: (player: Player, gameState: GameState) => void
+  ) => void;
 
   public leaveGameEvent: (onLeaveGame: (gameName: string) => void) => void;
 
@@ -53,6 +55,7 @@ export default class signalRConnector {
     //Fired when you create a game or a player joins the game
     this.playerAddedToGameEvent = (onPlayerAddedToGame) => {
       this.connection.on("playerAddedToGame", (player, gameState) => {
+        alert("player added to game");
         onPlayerAddedToGame(player, gameState);
       });
     };
@@ -66,8 +69,8 @@ export default class signalRConnector {
 
     //Fired and starts clients quizzes
     this.startGameEvent = (onStartGame) => {
-      this.connection.on("StartGame", () => {
-        onStartGame();
+      this.connection.on("StartGame", (gameName) => {
+        onStartGame(gameName);
       });
     };
 
@@ -89,16 +92,23 @@ export default class signalRConnector {
     //Fired when a player accumulates enough points to win terminating their game
     //Winners and losers go to different pages
     this.winnerEvent = (onWinner) => {
-      this.connection.on("Winner", (userName) => {
-        onWinner(userName);
+      this.connection.on("Winner", (player, gameState) => {
+        onWinner(player, gameState);
       });
     };
 
     this.incrementQuestionIndexEvent = (onIncrementQuestionIndex) => {
-      this.connection.on("incrementQuestionIndex", (questionIndex) => {
-        onIncrementQuestionIndex(questionIndex);
+      this.connection.on("incrementQuestionIndex", (player, questionIndex) => {
+        onIncrementQuestionIndex(player, questionIndex);
       });
     };
+
+    this.groupIncorrectAnswerEvent = (onGroupIncorrectAnswer) => {
+      this.connection.on("Group Incorrect Answer", (player) => {
+        onGroupIncorrectAnswer(player);
+      });
+    };
+
     this.playerNotReadyEvent = (onPlayerNotReady) => {
       this.connection.on("playerNotReady", () => {
         onPlayerNotReady();
@@ -117,16 +127,7 @@ export default class signalRConnector {
       });
     };
 
-    this.groupIncorrectAnswerEvent = (onGroupIncorrectAnswer) => {
-      // alert("alert");
-      this.connection.on("Group Incorrect Answer", (userName) => {
-        onGroupIncorrectAnswer(userName);
-      });
-    };
-
-    this.connection.onclose(() => {
-      //  alert("Closed");
-    });
+    this.connection.onclose(() => {});
   }
 
   public isConnected = () => {
@@ -134,7 +135,11 @@ export default class signalRConnector {
   };
 
   public createOrJoinGroupSignal = (gameState: GameState, player: Player) => {
+    alert("sending cjgs");
+    console.log(player);
+    console.log(gameState);
     this.connection.send("CreateOrJoinGame", gameState, player);
+    console.log("after sending");
   };
 
   public startGameSignal = (gameName: string) => {
@@ -155,16 +160,16 @@ export default class signalRConnector {
     this.connection.send("GroupScoreSignal", gameName, player);
   };
 
-  public groupWinnerSignal = (userName: string, gameName: string) => {
-    this.connection.send("GroupWinner", userName, gameName);
+  public groupWinnerSignal = (player: Player, gameState: GameState) => {
+    this.connection.send("GroupWinner", player, gameState);
   };
 
   public groupIncrementQuestionIndexSignal = (
-    userName: string,
+    player: Player,
     gameName: string,
     gameID: number
   ) => {
-    this.connection.send("IncrementQuestionIndex", gameName, userName, gameID);
+    this.connection.send("IncrementQuestionIndex", gameName, player, gameID);
   };
 
   public gameCheckSignal = (
@@ -176,8 +181,8 @@ export default class signalRConnector {
     this.connection.send("GameCheckSignal", gameName, userName, gameID);
   };
 
-  public groupIncorrectAnswerSignal = (userName: string, gameName: string) => {
-    this.connection.send("GroupIncorrectAnswer", userName, gameName);
+  public groupIncorrectAnswerSignal = (player: Player, gameName: string) => {
+    this.connection.send("GroupIncorrectAnswer", player, gameName);
   };
 
   public playerReadySignal = (

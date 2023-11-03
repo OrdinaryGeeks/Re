@@ -25,6 +25,7 @@ namespace API.Models
   public bool Ready {get;set;}
 
   public bool NextQuestion{get;set;}
+  public string GamesJoined{get;set;}
 
 
 }

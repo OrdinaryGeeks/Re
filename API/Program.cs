@@ -85,7 +85,7 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 
-  app.UseCors(options => options.AllowAnyMethod().AllowAnyHeader().WithOrigins("http://localhost:3000").AllowCredentials());
+  app.UseCors(options => options.AllowAnyMethod().AllowAnyHeader().WithOrigins("http://localhost:3000", "https://localhost:3000").AllowCredentials());
 
 app.UseHttpsRedirection();
 

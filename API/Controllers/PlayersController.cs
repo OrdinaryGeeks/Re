@@ -10,8 +10,8 @@ using API.Models;
 
 namespace API.Controllers
 {
+  [ApiController]
     [Route("api/[controller]")]
-    [ApiController]
     public class PlayersController : ControllerBase
     {
         private readonly QuizBowlContext _context;

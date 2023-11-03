@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import agent from "../../app/client";
 import { router } from "../../app/router/Routes";
 import { GameState } from "./GameState";
@@ -24,6 +24,8 @@ export const createOrGetPlayer = createAsyncThunk<Player, Player>(
   async (data: Player, thunkAPI) => {
     try {
       const player = await agent.Player.createOrReturn(data);
+      console.log(player);
+      console.log("is the player");
       const currentPlayer: Player = {
         ...player,
 
@@ -33,10 +35,14 @@ export const createOrGetPlayer = createAsyncThunk<Player, Player>(
         ready: false,
         gameName: "",
       };
-      await agent.Player.updatePlayer(currentPlayer);
 
-      localStorage.setItem("player", JSON.stringify(currentPlayer));
-      return currentPlayer;
+      console.log(currentPlayer);
+      await agent.Player.updatePlayer(currentPlayer);
+      const getThePlayer: Player = await agent.Player.getPlayer(
+        currentPlayer.id
+      );
+      console.log(getThePlayer);
+      return getThePlayer;
     } catch (error) {
       return thunkAPI.rejectWithValue({ error: error });
     }
@@ -69,6 +75,20 @@ export const getGame = createAsyncThunk<GameState, number>(
     }
   }
 );
+
+//used by Lobby page.  Pushes in a gamestate and pulls the data from local storage
+export const joinGame = createAsyncThunk<
+  [Player, GameState],
+  [Player, GameState]
+>("game/joinGame", async (data, thunkAPI) => {
+  try {
+    const newPlayer: Player = await agent.Player.updatePlayer(data[0]);
+    return [newPlayer, data[1]];
+  } catch (error) {
+    return thunkAPI.rejectWithValue({ error: error });
+  }
+});
+
 export const createGame = createAsyncThunk<
   [GameState, Player[], Player],
   GameState
@@ -78,6 +98,7 @@ export const createGame = createAsyncThunk<
     // console.log(game.id);
 
     localStorage.setItem("game", JSON.stringify(game));
+
     const player = localStorage.getItem("player") || null;
 
     let currentPlayer: Player = {
@@ -89,6 +110,8 @@ export const createGame = createAsyncThunk<
       nextQuestion: false,
       ready: false,
       gameName: "",
+      incorrect: false,
+      gamesJoined: "",
     };
     if (player) {
       //   const gameState: GameState = JSON.parse(game);
@@ -96,8 +119,8 @@ export const createGame = createAsyncThunk<
       //  if (gameState.players.find((x) => x == currentPlayer) == undefined)
 
       currentPlayer = JSON.parse(player);
-      localStorage.setItem("player", JSON.stringify(currentPlayer));
-      currentPlayer.gameStateId = game.id;
+      currentPlayer.gamesJoined += data.gameName + ";";
+      currentPlayer.gameStateId = data.id;
       //  alert(currentPlayer.gameStateId);
       await agent.Player.updateGameState(currentPlayer);
     }
@@ -154,7 +177,6 @@ export const winner = createAsyncThunk<
 >("game/winner", async (data, thunkAPI) => {
   try {
     await agent.Player.updatePlayer(data[1]);
-    localStorage.setItem("player", JSON.stringify(data[1]));
 
     localStorage.setItem("game", JSON.stringify(data[0]));
     await agent.Game.updateGame(data[0]);
@@ -194,9 +216,10 @@ export const loser = createAsyncThunk<[GameState, Player], [GameState, Player]>(
         nextQuestion: false,
         ready: false,
         gameName: "",
+        incorrect: false,
+        gamesJoined: "",
       };
 
-      localStorage.setItem("player", JSON.stringify(currentPlayer));
       await agent.Player.updatePlayer(currentPlayer);
 
       const currentGameState: GameState = {
@@ -217,44 +240,6 @@ export const loser = createAsyncThunk<[GameState, Player], [GameState, Player]>(
   }
 );
 
-//used by Lobby page.  Pushes in a gamestate and pulls the data from local storage
-export const joinGame = createAsyncThunk<
-  [Player, GameState],
-  [Player, GameState]
->("game/joinGame", async (data, thunkAPI) => {
-  try {
-    // const player = localStorage.getItem("player") || null;
-
-    //alert(currentPlayer.gameStateId + " " + currentPlayer.userName);
-    localStorage.setItem("player", JSON.stringify(data));
-    await agent.Player.updatePlayer(data[0]);
-    //alert(returnPlayer.gameStateId + " " + returnPlayer.userName)}
-    //Checking if player and gamestate are null. also check in calling function
-    return data;
-  } catch (error) {
-    return thunkAPI.rejectWithValue({ error: error });
-  }
-});
-
-/*
-    if (player) {
-      //   const gameState: GameState = JSON.parse(game);
-      //  const currentPlayer: Player = JSON.parse(player);
-      //  if (gameState.players.find((x) => x == currentPlayer) == undefined)
-
-      currentPlayer = JSON.parse(player);
-
-      currentPlayer.gameStateId = data.id;
-
-      await agent.Player.updateGameState(currentPlayer);
-
-      inGamePlayers = await agent.Game.getPlayersInGame(data.id);
-      if (!inGamePlayers.includes(currentPlayer))
-        inGamePlayers.push(currentPlayer);
-      alert(inGamePlayers.length + " users");
-      localStorage.setItem("game", JSON.stringify(data));
-      localStorage.setItem("player", JSON.stringify(currentPlayer));
-    }*/
 //used by Lobby page.  Pushes in a gamestate and pulls the data from local storage
 export const leaveGame = createAsyncThunk<Player, Player>(
   "game/leaveGame",
@@ -285,22 +270,12 @@ export const quizSlice = createSlice({
         state.usersInGame[index] = { ...action.payload };
       }
     },
-
-    handleUpdateFromPATGE: (state, action) => {
-      state.usersInGame = action.payload[1];
-      //  if (state.usersInGame) alert(state.usersInGame.length + " length");
-      if (state.usersInGame)
-        state.player =
-          state.usersInGame[
-            state.usersInGame?.findIndex(
-              (player) => player.id == action.payload[0]
-            )
-          ];
-    },
   },
   extraReducers: (builder) => {
     builder.addCase(getPlayer.fulfilled, (state, action) => {
       state.player = { ...action.payload };
+      if (state.player)
+        localStorage.setItem("player", JSON.stringify(state.player));
     });
     builder.addCase(getUsersInGame.fulfilled, (state, action) => {
       state.usersInGame = action.payload;
@@ -312,46 +287,59 @@ export const quizSlice = createSlice({
       state.gameState = { ...action.payload };
     });
     builder.addCase(updatePlayer.fulfilled, (state, action) => {
-      alert("updateplayer");
-      // console.log(action.payload);
       state.player = { ...action.payload };
-      //   console.log("state player ");
-      //   console.log(state.player);
+      if (state.player)
+        localStorage.setItem("player", JSON.stringify(state.player));
     });
     builder.addCase(winner.fulfilled, (state, action) => {
       state.gameState = { ...action.payload[0] };
       state.player = { ...action.payload[1] };
+      if (state.player)
+        localStorage.setItem("player", JSON.stringify(state.player));
     });
     builder.addCase(loser.fulfilled, (state, action) => {
       state.gameState = { ...action.payload[0] };
       state.player = { ...action.payload[1] };
+      if (state.player)
+        localStorage.setItem("player", JSON.stringify(state.player));
       // router.navigate("/Loser");
     });
     builder.addCase(createGame.fulfilled, (state, action) => {
-      state.gameState = action.payload[0];
+      state.gameState = { ...action.payload[0] };
       state.usersInGame = action.payload[1];
-      state.player = action.payload[2];
+      state.player = { ...action.payload[2] };
+
+      if (state.player)
+        localStorage.setItem("player", JSON.stringify(state.player));
 
       router.navigate("/Game");
     });
     builder.addCase(createOrGetPlayer.fulfilled, (state, action) => {
       state.player = action.payload;
+      if (state.player)
+        localStorage.setItem("player", JSON.stringify(state.player));
     });
     builder.addCase(joinGame.fulfilled, (state, action) => {
       state.player = { ...action.payload[0] };
+      if (state.player)
+        localStorage.setItem("player", JSON.stringify(state.player));
       state.gameState = { ...action.payload[1] };
       // alert(state.player.userName);
       // alert(state.gameState);
     });
     builder.addCase(leaveGame.fulfilled, (state, action) => {
       state.player = { ...action.payload };
-
+      if (state.player)
+        localStorage.setItem("player", JSON.stringify(state.player));
+      //localStorage.setItem("player", state.player);
       state.usersInGame = [];
       state.gameState = null;
     });
 
     builder.addCase(createOrGetPlayer.rejected, (state) => {
       state.player = null;
+      if (state.player)
+        localStorage.setItem("player", JSON.stringify(state.player));
       localStorage.removeItem("player");
       router.navigate("/");
     });
@@ -361,8 +349,5 @@ export const quizSlice = createSlice({
   },
 });
 
-export const {
-  updateUsersInGameWithPlayer,
-  updateUsersInGame,
-  handleUpdateFromPATGE,
-} = quizSlice.actions;
+export const { updateUsersInGameWithPlayer, updateUsersInGame } =
+  quizSlice.actions;

@@ -41,6 +41,7 @@ export default function QuizBowl() {
 
   //Signals to send through signalRconnection to signalRHub
   const {
+    groupIncorrectAnswerEvent,
     groupIncorrectAnswerSignal,
     groupBuzzInSignal,
     groupScoreEvent,
@@ -66,6 +67,7 @@ export default function QuizBowl() {
 
   useEffect(() => {
     playerAddedToGameEvent((playerTemp: Player, tempGameState: GameState) => {
+      //console.log("player added to game event");
       if (playerName == playerTemp.userName) {
         if (playerTemp) {
           const tempPlayer: Player = {
@@ -90,7 +92,12 @@ export default function QuizBowl() {
   //This is called by button click and sends signal to SignalR that current player is joining the given game
   function joinGameOnHub() {
     if (gameState && player) {
-      createOrJoinGroupSignal(gameState, player);
+      const tempPlayer: Player = {
+        ...player,
+        //  gamesJoined: player.gamesJoined + gameState.gameName + ";",
+      };
+
+      createOrJoinGroupSignal(gameState, tempPlayer);
     }
   }
 
@@ -102,7 +109,7 @@ export default function QuizBowl() {
         ...player,
         gameName: "",
         gameStateId: null,
-
+        incorrect: false,
         ready: false,
         nextQuestion: false,
       };
@@ -114,18 +121,22 @@ export default function QuizBowl() {
 
   //after start game signal startgameevent sets players state value to true
   //beginning the game.  The game is updated here via the dispatch
+
+  //This gets called with old values of gameState. Needs to be investigated******
   useEffect(() => {
-    startGameEvent(() => {
-      if (gameState) {
-        setStartGame(true);
-        const updatedGame: GameState = { ...gameState, status: "Starting" };
-        dispatch(updateGame(updatedGame));
-      }
+    startGameEvent((gameName: string) => {
+      //console.log("start game event");
+      if (gameState)
+        if (gameState.gameName == gameName) {
+          setStartGame(true);
+          const updatedGame: GameState = { ...gameState, status: "Starting" };
+
+          dispatch(updateGame(updatedGame));
+        }
     });
   }, [gameState, dispatch, startGameEvent]);
 
   //called by pressing start button. will begin game for all players via startgamesignal
-  //
   function startGameNow() {
     if (gameState) startGameSignal(gameState.gameName);
   }
@@ -134,8 +145,9 @@ export default function QuizBowl() {
 
   useEffect(() => {
     groupScoreEvent((newPlayer: Player) => {
+      //console.log("group score event");
       if (playerName == newPlayer.userName) {
-        // alert("dispatching");
+        newPlayer.incorrect = false;
         dispatch(updatePlayer(newPlayer)).then(() => {
           if (newPlayer.gameStateId)
             dispatch(updateUsersInGameWithPlayer(newPlayer));
@@ -143,20 +155,27 @@ export default function QuizBowl() {
       } else {
         if (newPlayer.gameStateId)
           dispatch(updateUsersInGameWithPlayer(newPlayer));
+        if (player) {
+          const tempPlayer: Player = { ...player, incorrect: false };
+          dispatch(updatePlayer(tempPlayer)).then(() => {
+            if (newPlayer.gameStateId)
+              dispatch(updateUsersInGameWithPlayer(tempPlayer));
+          });
+        }
       }
 
       setBuzzIn(false);
 
       setQI((c) => c + 1);
     });
-  }, [groupScoreEvent, playerName, dispatch]);
+  }, [groupScoreEvent, playerName, player, dispatch]);
 
+  //event handler for handler that will award points then pass to everyone through websocket
+  //also triggers winning event if points are over the threshold
   const checkAnswer = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (answer == questions[questionIndex % questions.length].answer) {
-      // alert("Congratulations");
-
       if (player && gameState) {
         const newPlayer: Player = {
           ...player,
@@ -165,17 +184,39 @@ export default function QuizBowl() {
         };
 
         if (
-          player.score + questions[questionIndex % questions.length].points >
+          player.score + questions[questionIndex % questions.length].points >=
           gameState.scoreToWin
-        )
-          groupWinnerSignal(player.userName, gameState.gameName);
-        else groupScoreSignal(gameState.gameName, newPlayer);
+        ) {
+          //console.log(gameState);
+          groupWinnerSignal(player, gameState);
+        } else groupScoreSignal(gameState.gameName, newPlayer);
       }
     } else {
       if (player && gameState)
-        groupIncorrectAnswerSignal(player.userName, gameState.gameName);
+        groupIncorrectAnswerSignal(player, gameState.gameName);
     }
   };
+  useEffect(() => {
+    groupIncorrectAnswerEvent((tempPlayer: Player) => {
+      //console.log("Incorrect answer event");
+      if (playerName) {
+        if (tempPlayer.userName == playerName) {
+          tempPlayer.incorrect = true;
+          dispatch(updatePlayer(tempPlayer)).then(() => {
+            if (tempPlayer.gameStateId)
+              dispatch(updateUsersInGameWithPlayer(tempPlayer));
+          });
+        } else {
+          if (tempPlayer.gameStateId)
+            dispatch(updateUsersInGameWithPlayer(tempPlayer));
+        }
+      }
+    });
+
+    //  if (userName == playerName) {
+    //  setIncorrect((c) => (c ? true : true));
+    //  //console.log(userName);
+  }, [groupIncorrectAnswerEvent, dispatch, playerName]);
 
   useEffect(() => {
     fetch(import.meta.env.VITE_API_URL + "/questions")
@@ -189,51 +230,68 @@ export default function QuizBowl() {
   }, []);
 
   useEffect(() => {
-    incrementQuestionIndexEvent((questionIndex: number) => {
+    incrementQuestionIndexEvent((tempPlayer: Player, questionIndex: number) => {
+      //console.log("inc question");
+      tempPlayer.incorrect = false;
+      tempPlayer.ready = false;
+
+      dispatch(updatePlayer(tempPlayer)).then(() => {
+        if (tempPlayer.gameStateId)
+          dispatch(updateUsersInGameWithPlayer(tempPlayer));
+      });
+
       setQI(questionIndex);
+      setBuzzIn(false);
     });
-  }, [incrementQuestionIndexEvent, playerName]);
+  }, [incrementQuestionIndexEvent, dispatch]);
 
   useEffect(() => {
-    winnerEvent((userName) => {
-      if (playerName == userName) {
-        if (player && gameState) {
-          const currentPlayer: Player = {
-            ...player,
+    winnerEvent((tempPlayer, tempGameState) => {
+      //console.log("winner event");
+      if (playerName == tempPlayer.userName) {
+        {
+          tempPlayer = {
+            ...tempPlayer,
             score: 0,
             gameStateId: null,
             nextQuestion: false,
             ready: false,
             gameName: "",
           };
-          const currentGameState: GameState = {
-            id: gameState.id,
-            gameName: gameState.gameName,
+          const newTempGameState = {
+            ...tempGameState,
 
-            status: "Finished",
-            scoreToWin: gameState.scoreToWin,
-            maxPlayers: gameState.maxPlayers,
-            questionIndex: gameState.questionIndex,
+            status: "Winner",
           };
 
-          if (gameState && player) {
-            dispatch(winner([currentGameState, currentPlayer])).then(() =>
-              router.navigate("/Winner")
-            );
-          }
-        }
-      } else {
-        if (gameState && player) {
-          dispatch(loser([gameState, player])).then(() =>
-            router.navigate("/Loser")
+          dispatch(winner([newTempGameState, tempPlayer])).then(() =>
+            router.navigate("/Winner")
           );
         }
+      } else {
+        tempPlayer = {
+          ...tempPlayer,
+          score: 0,
+          gameStateId: null,
+          nextQuestion: false,
+          ready: false,
+          gameName: "",
+        };
+        tempGameState = {
+          ...tempGameState,
+
+          status: "Winner",
+        };
+        dispatch(loser([tempGameState, tempPlayer])).then(() =>
+          router.navigate("/Loser")
+        );
       }
     });
-  }, [dispatch, winnerEvent, playerName, navigate, gameState, player]);
+  }, [dispatch, winnerEvent, playerName, navigate]);
 
   useEffect(() => {
     groupBuzzInEvent((userName) => {
+      //console.log("Group buzz in event");
       if (player) {
         setBuzzedInPlayer(userName);
         setBuzzIn(true);
@@ -242,10 +300,10 @@ export default function QuizBowl() {
   }, [groupBuzzInEvent, player]);
 
   function incrementSignal() {
-    // console.log("inc signal");
+    // //console.log("inc signal");
     if (gameState && player)
       groupIncrementQuestionIndexSignal(
-        player.userName,
+        player,
         gameState.gameName,
         gameState.id
       );
@@ -326,23 +384,26 @@ export default function QuizBowl() {
                 Score {mappedPlayer.score}
               </Typography>
 
-              {player && player.userName == mappedPlayer.userName && (
-                <Box className="buttonBox">
-                  <Button
-                    type="button"
-                    disabled={disable}
-                    onClick={() => {
-                      groupBuzzInSignal(player.userName, gameState.gameName);
-                      setBuzzIn(true);
-                    }}
-                  >
-                    Buzz In
-                  </Button>
-                </Box>
-              )}
+              {player &&
+                !player.incorrect &&
+                player.userName == mappedPlayer.userName && (
+                  <Box className="buttonBox">
+                    <Button
+                      type="button"
+                      disabled={disable}
+                      onClick={() => {
+                        groupBuzzInSignal(player.userName, gameState.gameName);
+                        setBuzzIn(true);
+                      }}
+                    >
+                      Buzz In
+                    </Button>
+                  </Box>
+                )}
 
               {player &&
                 buzzedIn &&
+                !player.incorrect &&
                 buzzedInPlayer == mappedPlayer.userName &&
                 mappedPlayer.userName == player.userName && (
                   <Box className="buttonBox">
@@ -353,6 +414,17 @@ export default function QuizBowl() {
                         value={answer}
                       />
                       <Button type="submit">Check Answer</Button>
+                    </Box>
+                  </Box>
+                )}
+              {player &&
+                player.incorrect &&
+                mappedPlayer.userName == player.userName && (
+                  <Box className="buttonBox">
+                    <Box>
+                      <Typography>
+                        Incorrect Answer given this round. Wait for next round
+                      </Typography>
                     </Box>
                   </Box>
                 )}

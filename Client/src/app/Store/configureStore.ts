@@ -2,11 +2,13 @@ import { configureStore } from "@reduxjs/toolkit";
 import { accountSlice } from "../../features/account/accountSlice";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { quizSlice } from "../../features/quizBowl/quizSlice";
+//import { playerSlice } from "../../features/quizBowl/playerAdapter";
 
 export const store = configureStore({
   reducer: {
     account: accountSlice.reducer,
     quiz: quizSlice.reducer,
+    // player: playerSlice.reducer,
   },
 });
 

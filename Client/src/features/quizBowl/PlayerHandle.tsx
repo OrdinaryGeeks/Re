@@ -19,6 +19,8 @@ export default function PlayerHandle() {
         ready: false,
         nextQuestion: false,
         gameName: "",
+        incorrect: false,
+        gamesJoined: "",
       };
 
       await dispatch(createOrGetPlayer(tempPlayer));
@@ -43,7 +45,6 @@ export default function PlayerHandle() {
           Set Player Handle
         </Button>
       </Box>
-      ;
     </Container>
   );
 }
