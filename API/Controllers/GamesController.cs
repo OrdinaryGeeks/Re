@@ -83,6 +83,38 @@ namespace API.Controllers
 
             return NoContent();
         }
+
+       [HttpGet("startGame/{id}")]
+        public async Task<IActionResult> StartGame(int id)
+        {
+            if (!GameStateExists(id))
+            {
+                return NotFound();
+            }
+
+
+            GameState startGameState = _context.GameStates.Find(id);
+            startGameState.Status = "Starting";
+            _context.Entry(startGameState).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!GameStateExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
         
         [HttpGet("usersInGame/{id}")]
         public  IEnumerable<Player> GetUsersInGame(int id)

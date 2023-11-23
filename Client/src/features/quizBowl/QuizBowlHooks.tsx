@@ -1,6 +1,7 @@
 //import { Box, Container, CssBaseline } from "@mui/material";
 //import Typography from "@material-ui/core/Typography";
-import { useContext, useMemo, useRef, useState } from "react";
+
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { SignalRContext } from "../signalR/signalRContext";
 import {
   Box,
@@ -10,40 +11,20 @@ import {
   CssBaseline,
   Typography,
 } from "@mui/material";
-import {
-  // useClientMethod,
-  useClientMethodJoinGame,
-  useClientLeaveGame,
-  useClientMethodStartGame,
-  useClientMethodIncQI,
-  useClientMethodBuzzIn,
-  useClientScore,
-  useClientWinner,
-  useIncorrectAnswer,
-} from "../Hub/useClientMethod";
 
 import { useHubMethod } from "../Hub/useHubMethod";
-//import { GameState } from "./GameState";
-//import { Player } from "./Player";
+
 import { useAppSelector, useAppDispatch } from "../../app/Store/configureStore";
 
 import {
   getUsersInGame,
-  //getUsersInGame,
   leaveGame,
   loser,
-  updateGame,
+  gameStart,
   updateMakeAllPlayersInGameReady,
   updatePlayer,
   updateUsersInGameWithPlayer,
   winner,
-  // updateGame,
-  //loser,
-  //updateGame,
-  //updateMakeAllPlayersInGameReady,
-  // updatePlayer,
-  //updateUsersInGameWithPlayer,
-  //winner,
 } from "./quizSlice";
 import { Player } from "./Player";
 import { router } from "../../app/router/Routes";
@@ -53,17 +34,8 @@ import QuestionBox from "./QuestionBox";
 export default function QuizBowlHooks() {
   const connection = useContext(SignalRContext);
   const [answer, setAnswer] = useState("");
-  /*const [checkClientScore, setCheckClientScore] = useState(0);
-  const [checkWinner, setCheckWinner] = useState(0);
-  const [checkIncorrect, setCheckIncorrect] = useState(0);
-  const [checkClientJoinGame, setCheckClientJoinGame] = useState(0);
-  const [checkClientLeaveGame, setClientLeaveGame] = useState(0);
-  const [checkClientStartGame, setClientStartGame] = useState(0);
-  const [checkIncQuestionIndex, setIncQuestionIndex] = useState(0);
-  const [checkBuzzInIndex, setBuzzedInIndex] = useState(0);*/
   const [buzzedInPlayer, setBuzzedInPlayer] = useState("");
   const [buzzedIn, setBuzzedIn] = useState(false);
-  //const [methodName, setMethodName] = useState("");
 
   const [questionIndex, setQI] = useState(0);
   const {
@@ -83,19 +55,22 @@ export default function QuizBowlHooks() {
   const [startGame, setStartGame] = useState(false);
   const dispatch = useAppDispatch();
   const playerName = useMemo(() => player?.userName, [player?.userName]);
-
-  //useClientMethod(connection.connection, "messageReceived", (_, message) => {
-  //    console.log(message);
-  //    setMessage(message[0]);
-  //  });
+  const gameID = useMemo(() => gameState?.id, [gameState?.id]);
 
   const renderCount = useRef(0);
 
   renderCount.current = renderCount.current + 1;
-  useClientMethodJoinGame(
-    connection.connection,
 
-    (playerTemp, tempGameState) => {
+  useEffect(() => {
+    if (!connection.connection) {
+      return;
+    }
+
+    const playerAddedToGame = (
+      playerTemp: Player,
+      tempGameState: GameState
+    ) => {
+      console.log("Player added to game");
       if (playerName == playerTemp.userName) {
         if (playerTemp) {
           const tempPlayer: Player = {
@@ -109,163 +84,147 @@ export default function QuizBowlHooks() {
               if (tempPlayer.gameStateId)
                 dispatch(getUsersInGame(tempPlayer.gameStateId));
             });
-            setGameJoinedOnHub(true);
+            setGameJoinedOnHub(() => true);
           }
         }
       } else {
         dispatch(updateUsersInGameWithPlayer(playerTemp));
       }
-    }
-  );
+    };
 
-  useClientMethodBuzzIn(
-    connection.connection,
+    const buzzedInMethod = (buzzedInUserName: string) => {
+      console.log("Buzzed In Username  " + buzzedInUserName);
+      setBuzzedInPlayer(() => buzzedInUserName);
+      setBuzzedIn(() => true);
+    };
 
-    (buzzedInUserName) => {
-      console.log(buzzedInUserName);
-      setBuzzedInPlayer(buzzedInUserName);
-      setBuzzedIn(true);
-    }
-  );
-
-  useClientMethodIncQI(
-    connection.connection,
-
-    (newQuestionIndex) => {
-      console.log(newQuestionIndex);
+    const incQIMethod = (newQuestionIndex: number) => {
+      console.log("Inc QI " + newQuestionIndex);
       dispatch(updateMakeAllPlayersInGameReady());
-      setQI(newQuestionIndex);
-      setBuzzedIn(false);
-    }
-  );
+      setQI(() => newQuestionIndex);
+      setBuzzedIn(() => false);
+    };
 
-  useClientLeaveGame(
-    connection.connection,
-
-    (player, gameState) => {
-      console.log(player);
-      console.log(gameState);
+    const playerLeaveGameMethod = (player: Player, gameState: GameState) => {
+      console.log(player.userName);
+      console.log(gameState.gameName);
       console.log("Player left game");
-    }
-  );
+    };
 
-  useClientMethodStartGame(
-    connection.connection,
+    const playerStartGameMethod = (newGameState: GameState) => {
+      if (gameID) {
+        console.log("start " + newGameState.gameName);
+        setStartGame(() => true);
 
-    (newGameState) => {
-      console.log("start " + newGameState.gameName);
-      setStartGame(true);
-
-      if (gameState) {
-        const updatedGame: GameState = { ...gameState, status: "Starting" };
-
-        dispatch(updateGame(updatedGame));
+        dispatch(gameStart(gameID));
       }
-    }
-  );
+    };
 
-  useIncorrectAnswer(
-    connection.connection,
-
-    (tempPlayer) => {
-      console.log("Incorrect answer event");
+    const incorrectAnswerMethod = (incorrectPlayer: Player) => {
+      console.log("Incorrect answer event " + incorrectPlayer.userName);
       if (playerName) {
-        if (tempPlayer.userName == playerName) {
-          tempPlayer.incorrect = true;
-          dispatch(updatePlayer(tempPlayer)).then(() => {
-            if (tempPlayer.gameStateId)
-              dispatch(updateUsersInGameWithPlayer(tempPlayer));
+        if (incorrectPlayer.userName == playerName) {
+          incorrectPlayer.incorrect = true;
+          dispatch(updatePlayer(incorrectPlayer)).then(() => {
+            if (incorrectPlayer.gameStateId)
+              dispatch(updateUsersInGameWithPlayer(incorrectPlayer));
           });
         } else {
-          if (tempPlayer.gameStateId)
-            dispatch(updateUsersInGameWithPlayer(tempPlayer));
+          if (incorrectPlayer.gameStateId)
+            dispatch(updateUsersInGameWithPlayer(incorrectPlayer));
         }
       }
-    }
-  );
+    };
 
-  //  if (userName == playerName) {
-  //  setIncorrect((c) => (c ? true : true));
-  //  //console.log(userName);
-
-  useClientWinner(
-    connection.connection,
-
-    (tempPlayer, tempGameState) => {
-      if (playerName == tempPlayer.userName) {
+    const winnerMethod = (
+      winningPlayer: Player,
+      resolvedGameState: GameState
+    ) => {
+      if (playerName == winningPlayer.userName) {
         {
-          tempPlayer = {
-            ...tempPlayer,
+          winningPlayer = {
+            ...winningPlayer,
             score: 0,
             gameStateId: null,
             nextQuestion: false,
             ready: false,
             gameName: "",
           };
-          const newTempGameState = {
-            ...tempGameState,
+          const ResolvedGameState = {
+            ...resolvedGameState,
 
             status: "Winner",
           };
 
-          dispatch(winner([newTempGameState, tempPlayer])).then(() =>
+          dispatch(winner([ResolvedGameState, winningPlayer])).then(() =>
             router.navigate("/Winner")
           );
         }
       } else {
-        tempPlayer = {
-          ...tempPlayer,
+        winningPlayer = {
+          ...winningPlayer,
           score: 0,
           gameStateId: null,
           nextQuestion: false,
           ready: false,
           gameName: "",
         };
-        const newTempGameState = {
-          ...tempGameState,
+        const ResolvedGameState = {
+          ...resolvedGameState,
 
           status: "Loser",
         };
-        dispatch(loser([newTempGameState, tempPlayer])).then(() =>
+        dispatch(loser([ResolvedGameState, winningPlayer])).then(() =>
           router.navigate("/Loser")
         );
       }
-    }
-  );
+    };
 
-  useClientScore(
-    connection.connection,
-
-    (playerWithScore) => {
-      if (playerName == playerWithScore.userName) {
-        playerWithScore.incorrect = false;
-        console.log(playerWithScore.score);
-        dispatch(updatePlayer(playerWithScore)).then(() => {
-          if (playerWithScore.gameStateId)
-            dispatch(updateUsersInGameWithPlayer(playerWithScore));
+    const playerScoreMethod = (playerWhoScored: Player) => {
+      if (playerName == playerWhoScored.userName) {
+        playerWhoScored.incorrect = false;
+        console.log(playerWhoScored.score);
+        dispatch(updatePlayer(playerWhoScored)).then(() => {
+          if (playerWhoScored.gameStateId)
+            dispatch(updateUsersInGameWithPlayer(playerWhoScored));
         });
       }
       //leave everyone else alone. For the players in this game on the client side
       //make them all ready
       else {
-        if (gameState) dispatch(updateUsersInGameWithPlayer(playerWithScore));
+        dispatch(updateUsersInGameWithPlayer(playerWhoScored));
         dispatch(updateMakeAllPlayersInGameReady());
       }
 
-      setBuzzedIn(false);
+      setBuzzedIn(() => false);
 
       setQI((c) => c + 1);
-    }
-  );
-  /* 
-  useClientGameState(connection.connection, "StartGame", (gameState) => {
-    console.log("starting game");
-    console.log(gameState);
-    setStartGame(true);
-    const updatedGame: GameState = { ...gameState, status: "Starting" };
+    };
 
-    dispatch(updateGame(updatedGame));
-  }); */
+    connection.connection.on("playerAddedToGame", playerAddedToGame);
+    connection.connection.on("groupBuzzIn", buzzedInMethod);
+    connection.connection.on("incrementQuestionIndex", incQIMethod);
+    connection.connection.on("playerLeftGame", playerLeaveGameMethod);
+    connection.connection.on("StartGame", playerStartGameMethod);
+    connection.connection.on("playerLeftGame", playerLeaveGameMethod);
+    connection.connection.on("Group Incorrect Answer", incorrectAnswerMethod);
+    connection.connection.on("Winner", winnerMethod);
+    connection.connection.on("Group Correct Answer", playerScoreMethod);
+
+    return () => {
+      connection.connection.off("playerAddedToGame", playerAddedToGame);
+      connection.connection.off("groupBuzzIn", buzzedInMethod);
+      connection.connection.off("incrementQuestionIndex", incQIMethod);
+      connection.connection.off("playerLeftGame", playerLeaveGameMethod);
+      connection.connection.off("StartGame", playerStartGameMethod);
+      connection.connection.off(
+        "Group Incorrect Answer",
+        incorrectAnswerMethod
+      );
+      connection.connection.off("Winner", winnerMethod);
+      connection.connection.off("Group Correct Answer", playerScoreMethod);
+    };
+  }, [connection.connection, dispatch, playerName, gameID]);
 
   //Called either when pressing Leave Button before joining hub or after joining hub and pressing
   //leave hub button.  dispatches leaveGame event which updates the player and our player state

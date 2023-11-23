@@ -71,6 +71,7 @@ const Game = {
   list: () => requests.get("games"),
   lobbyList: () => requests.get("games/lobby"),
   finishedList: () => requests.get("games/finished"),
+  startGame: (value: number) => requests.get("startGame/" + value),
   updateGame: (values: GameState) => {
     requests.put("games/" + values.id, values);
   },

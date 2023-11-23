@@ -238,6 +238,17 @@ export const winner = createAsyncThunk<
   }
 });
 
+export const gameStart = createAsyncThunk<boolean, number>(
+  "game/gameStart",
+  async (data, thunkAPI) => {
+    try {
+      await agent.Game.startGame(data);
+      return true;
+    } catch (error) {
+      return thunkAPI.rejectWithValue({ error: error });
+    }
+  }
+);
 //the server doesn't return the object on an update so set the store gamestate to the passed in value
 export const updateGame = createAsyncThunk<GameState, GameState>(
   "game/updateGame",
@@ -357,6 +368,10 @@ export const quizSlice = createSlice({
     });
     builder.addCase(updateGame.fulfilled, (state, action) => {
       state.gameState = { ...action.payload };
+    });
+    builder.addCase(gameStart.fulfilled, (state, action) => {
+      if (action.payload && state.gameState)
+        state.gameState = { ...state.gameState, status: "Starting" };
     });
     builder.addCase(getGame.fulfilled, (state, action) => {
       state.gameState = { ...action.payload };

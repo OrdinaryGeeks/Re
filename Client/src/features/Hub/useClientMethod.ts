@@ -37,13 +37,13 @@ export function useClientLeaveGame(
       return;
     }
 
-    console.log(hubConnection);
+    console.log("PlayerLeftGame");
     hubConnection.on("playerLeftGame", method);
 
     return () => {
       hubConnection.off("playerLeftGame", method);
     };
-  }, [hubConnection, method]);
+  });
 }
 
 export function useClientScore(
@@ -56,12 +56,13 @@ export function useClientScore(
       return;
     }
 
+    console.log("Group Correct Answer");
     hubConnection.on("Group Correct Answer", method);
 
     return () => {
       hubConnection.off("Group Correct Answer", method);
     };
-  }, [hubConnection, method]);
+  });
 }
 
 export function useIncorrectAnswer(
@@ -74,12 +75,13 @@ export function useIncorrectAnswer(
       return;
     }
 
+    console.log("Group Incorrect Answer");
     hubConnection.on("Group Incorrect Answer", method);
 
     return () => {
       hubConnection.off("Group Incorrect Answer", method);
     };
-  }, [hubConnection, method]);
+  });
 }
 
 export function useClientWinner(
@@ -91,13 +93,13 @@ export function useClientWinner(
     if (!hubConnection) {
       return;
     }
-
+    console.log("Winner");
     hubConnection.on("Winner", method);
 
     return () => {
       hubConnection.off("Winner", method);
     };
-  }, [hubConnection, method]);
+  });
 }
 
 export function useClientMethodJoinGame(
@@ -109,13 +111,13 @@ export function useClientMethodJoinGame(
     if (!hubConnection) {
       return;
     }
-
+    console.log("Player added to game");
     hubConnection.on("playerAddedToGame", method);
 
     return () => {
       hubConnection.off("playerAddedToGame", method);
     };
-  }, [hubConnection, method]);
+  });
 }
 
 export function useClientMethodBuzzIn(
@@ -128,12 +130,13 @@ export function useClientMethodBuzzIn(
       return;
     }
 
+    console.log("BuzzIN");
     hubConnection.on("groupBuzzIn", method);
 
     return () => {
       hubConnection.off("groupBuzzIn", method);
     };
-  }, [hubConnection, method]);
+  });
 }
 
 export function useClientMethodIncQI(
@@ -145,13 +148,13 @@ export function useClientMethodIncQI(
     if (!hubConnection) {
       return;
     }
-
+    console.log("Use client QI");
     hubConnection.on("incrementQuestionIndex", method);
 
     return () => {
       hubConnection.off("incrementQuestionIndex", method);
     };
-  }, [hubConnection, method]);
+  });
 }
 
 export function useClientMethodStartGame(
@@ -164,10 +167,11 @@ export function useClientMethodStartGame(
       return;
     }
 
+    console.log("Client method start");
     hubConnection.on("StartGame", method);
 
     return () => {
       hubConnection.off("StartGame", method);
     };
-  }, [hubConnection, method]);
+  });
 }
