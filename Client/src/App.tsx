@@ -12,6 +12,7 @@ function App() {
     },
   });
 
+  console.log("App");
   return (
     <div>
       <ThemeProvider theme={theme}>

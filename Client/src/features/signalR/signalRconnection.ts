@@ -4,11 +4,15 @@ import { Player } from "../quizBowl/Player";
 
 const hubURL = import.meta.env.VITE_HUB_URL;
 
-export default class signalRConnector {
+export class signalRConnector {
   private connection: signalR.HubConnection;
 
   public playerAddedToGameEvent: (
-    onPlayerAddedToGame: (player: Player, gameState: GameState) => void
+    onPlayerAddedToGame: (
+      player: Player,
+      gameState: GameState,
+      messageIndex: number
+    ) => void
   ) => void;
 
   public startGameEvent: (onStartGame: (gameName: string) => void) => void;
@@ -20,7 +24,14 @@ export default class signalRConnector {
   ) => void;
 
   public incrementQuestionIndexEvent: (
-    onIncrementQuestionIndex: (player: Player, questionIndex: number) => void
+    onIncrementQuestionIndex: (questionIndex: number) => void
+  ) => void;
+  public events: (
+    onMessageReceived: (username: string, message: string) => void
+  ) => void;
+
+  public events2: (
+    onMessageReceived: (username: string, message: string) => void
   ) => void;
 
   public playerReadyEvent: (onPlayerReady: (userID: number) => void) => void;
@@ -53,10 +64,33 @@ export default class signalRConnector {
       .catch((err) => document.write(err));
 
     //Fired when you create a game or a player joins the game
-    this.playerAddedToGameEvent = (onPlayerAddedToGame) => {
-      this.connection.on("playerAddedToGame", (player, gameState) => {
-        //  alert("player added to game");
-        onPlayerAddedToGame(player, gameState);
+    const opatg = (this.playerAddedToGameEvent = (onPlayerAddedToGame) => {
+      //  alert("player added to game event ");
+      this.connection.on(
+        "playerAddedToGame",
+        (player, gameState, messageIndex) => {
+          //  alert("player added to game in the meat");
+          onPlayerAddedToGame(player, gameState, messageIndex);
+        }
+      );
+    });
+
+    this.connection.off("playerAddedToGame", opatg);
+    /*   this.RemovePlayerAddedToGameEvent = (onRemovePlayerAddedToGame) => {
+
+      this.connection.off("playerAddedToGame, gameState, messageIndex",(player, oldGameState, oldMessageIndex) => {
+
+        onRemovePlayerAddedToGame(player, oldGameState, oldMessageIndex);
+      }
+    }; */
+    this.events = (onMessageReceived) => {
+      this.connection.on("messageReceived", (username, message) => {
+        onMessageReceived(username, message);
+      });
+    };
+    this.events2 = (onMessageReceived2) => {
+      this.connection.on("messageReceived2", (username, message) => {
+        onMessageReceived2(username, message);
       });
     };
 
@@ -98,8 +132,8 @@ export default class signalRConnector {
     };
 
     this.incrementQuestionIndexEvent = (onIncrementQuestionIndex) => {
-      this.connection.on("incrementQuestionIndex", (player, questionIndex) => {
-        onIncrementQuestionIndex(player, questionIndex);
+      this.connection.on("incrementQuestionIndex", (questionIndex) => {
+        onIncrementQuestionIndex(questionIndex);
       });
     };
 
@@ -130,6 +164,16 @@ export default class signalRConnector {
     this.connection.onclose(() => {});
   }
 
+  public newMessage = (messages: string) => {
+    this.connection
+      .send("newMessage", "foo", messages)
+      .then(() => console.log("sent"));
+  };
+  public newMessage2 = (messages: string) => {
+    this.connection
+      .send("newMessage", "foo", messages)
+      .then(() => console.log("sent"));
+  };
   public isConnected = () => {
     return this.connection.state == signalR.HubConnectionState.Connected;
   };
@@ -142,6 +186,9 @@ export default class signalRConnector {
     // console.log("after sending");
   };
 
+  // public leaveCreateOrJoinGroupSignal = (gameState: GameState) => {
+  //  this.connection.off();
+  //};
   public startGameSignal = (gameName: string) => {
     this.connection.send("StartGame", gameName);
   };
@@ -201,4 +248,4 @@ export default class signalRConnector {
     return signalRConnector.instance;
   }
 }
-//export default signalRConnector.getInstance;
+export default signalRConnector.getInstance;

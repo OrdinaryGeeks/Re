@@ -35,6 +35,7 @@ export default function CreateGame() {
       status: "Lobby",
       id: 0,
       questionIndex: 0,
+      messageIndex: 0,
     };
     await dispatch(createGame(userGame));
   }

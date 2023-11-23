@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(QuizBowlContext))]
-    [Migration("20231031134334_PlayerIncorrect")]
-    partial class PlayerIncorrect
+    [Migration("20231104000318_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,9 +34,12 @@ namespace API.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("GameName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("MaxPlayers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MessageIndex")
                         .HasColumnType("int");
 
                     b.Property<int>("QuestionIndex")
@@ -49,6 +52,10 @@ namespace API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GameName")
+                        .IsUnique()
+                        .HasFilter("[GameName] IS NOT NULL");
 
                     b.ToTable("GameStates");
                 });
@@ -69,6 +76,9 @@ namespace API.Migrations
 
                     b.Property<int?>("GameStateId")
                         .HasColumnType("int");
+
+                    b.Property<string>("GamesJoined")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("Incorrect")
                         .HasColumnType("bit");
@@ -209,13 +219,13 @@ namespace API.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "5340bc12-2edf-4da1-b8a3-58d1153715f7",
+                            Id = "07465430-cece-4a58-8bca-d6957ba4a003",
                             Name = "Member",
                             NormalizedName = "MEMBER"
                         },
                         new
                         {
-                            Id = "8f475d68-8813-4ca3-bc13-273d704b3423",
+                            Id = "10bcf57d-9db8-4633-bee5-20a800f6914d",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });

@@ -7,7 +7,7 @@
 namespace API.Migrations
 {
     /// <inheritdoc />
-    public partial class QuestionIndexAdd : Migration
+    public partial class DropMessageindexGameState : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,15 +15,42 @@ namespace API.Migrations
             migrationBuilder.DeleteData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
-                keyValue: "0cb1aac8-fea9-49eb-80bc-a588ecbd6a85");
+                keyValue: "07465430-cece-4a58-8bca-d6957ba4a003");
 
             migrationBuilder.DeleteData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
-                keyValue: "488d8c91-b999-46e3-af4a-70123cfba49f");
+                keyValue: "10bcf57d-9db8-4633-bee5-20a800f6914d");
+
+            migrationBuilder.DropColumn(
+                name: "MessageIndex",
+                table: "GameStates");
+
+            migrationBuilder.InsertData(
+                table: "AspNetRoles",
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                values: new object[,]
+                {
+                    { "85682b75-8f2c-47c6-a4d9-3e0fb0f886bd", null, "Member", "MEMBER" },
+                    { "acd2bc56-7593-46e7-9b94-238f42bff202", null, "Admin", "ADMIN" }
+                });
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DeleteData(
+                table: "AspNetRoles",
+                keyColumn: "Id",
+                keyValue: "85682b75-8f2c-47c6-a4d9-3e0fb0f886bd");
+
+            migrationBuilder.DeleteData(
+                table: "AspNetRoles",
+                keyColumn: "Id",
+                keyValue: "acd2bc56-7593-46e7-9b94-238f42bff202");
 
             migrationBuilder.AddColumn<int>(
-                name: "QuestionIndex",
+                name: "MessageIndex",
                 table: "GameStates",
                 type: "int",
                 nullable: false,
@@ -34,35 +61,8 @@ namespace API.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "25859d7c-7adb-488f-9111-0af3bb2b2759", null, "Admin", "ADMIN" },
-                    { "80836862-5d4a-4398-8cec-976e2739c399", null, "Member", "MEMBER" }
-                });
-        }
-
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DeleteData(
-                table: "AspNetRoles",
-                keyColumn: "Id",
-                keyValue: "25859d7c-7adb-488f-9111-0af3bb2b2759");
-
-            migrationBuilder.DeleteData(
-                table: "AspNetRoles",
-                keyColumn: "Id",
-                keyValue: "80836862-5d4a-4398-8cec-976e2739c399");
-
-            migrationBuilder.DropColumn(
-                name: "QuestionIndex",
-                table: "GameStates");
-
-            migrationBuilder.InsertData(
-                table: "AspNetRoles",
-                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[,]
-                {
-                    { "0cb1aac8-fea9-49eb-80bc-a588ecbd6a85", null, "Admin", "ADMIN" },
-                    { "488d8c91-b999-46e3-af4a-70123cfba49f", null, "Member", "MEMBER" }
+                    { "07465430-cece-4a58-8bca-d6957ba4a003", null, "Member", "MEMBER" },
+                    { "10bcf57d-9db8-4633-bee5-20a800f6914d", null, "Admin", "ADMIN" }
                 });
         }
     }

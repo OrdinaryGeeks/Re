@@ -1,98 +1,84 @@
-import { useState, useEffect, useMemo, useContext } from "react";
+import { useState, useEffect, /*useMemo*, */ useContext } from "react";
 import { Question } from "../../question";
-import Button from "@mui/material/Button";
-import { useAppDispatch, useAppSelector } from "../../app/Store/configureStore";
-import { Box, Card, Paper } from "@mui/material";
-import Typography from "@material-ui/core/Typography";
+//import Button from "@mui/material/Button";
 import {
-  getUsersInGame,
-  leaveGame,
-  loser,
-  updateGame,
-  updatePlayer,
-  updatePlayerForNextQuestion,
-  updateUsersInGameWithPlayer,
-  winner,
-} from "./quizSlice";
-import QuestionBox from "./QuestionBox";
-import { useNavigate } from "react-router-dom";
-import { router } from "../../app/router/Routes";
+  /* useAppDispatch,*/ useAppSelector,
+} from "../../app/Store/configureStore";
+import { Box, Container, CssBaseline } from "@mui/material";
+import Typography from "@material-ui/core/Typography";
+import //getUsersInGame,
+//leaveGame,
+//loser,
+//updateGame,
+//updateMakeAllPlayersInGameReady,
+// updatePlayer,
+//updateUsersInGameWithPlayer,
+//winner,
+"./quizSlice";
+//import QuestionBox from "./QuestionBox";
+//import { useNavigate } from "react-router-dom";
+//import { router } from "../../app/router/Routes";
 import { SignalRContext } from "../signalR/signalRContext";
-import { GameState } from "./GameState";
+//import { GameState } from "./GameState";
 import { Player } from "./Player";
 
 export default function QuizBowl() {
-  const [questions, setQuestions] = useState<Question[]>([]);
+  // const [questions, setQuestions] = useState<Question[]>([]);
 
-  const [questionIndex, setQI] = useState(0);
-  const [answer, setAnswer] = useState("");
+  //const [questionIndex, setQI] = useState(0);
+  //const [answer, setAnswer] = useState("");
 
-  const [isLoading, setLoading] = useState(true);
-  const [buzzedIn, setBuzzIn] = useState(false);
-  const [buzzedInPlayer, setBuzzedInPlayer] = useState("");
-  const [gameJoinedOnHub, setGameJoinedOnHub] = useState(false);
-  const [startGame, setStartGame] = useState(false);
+  //const [isLoading, setLoading] = useState(true);
+  //const [buzzedIn, setBuzzIn] = useState(false);
+  //const buzzedInPlayer = "";
+  //const startGame = false;
+  //const [buzzedInPlayer, setBuzzedInPlayer] = useState("");
+  //const [gameJoinedOnHub, setGameJoinedOnHub] = useState(false);
+  // const [startGame, setStartGame] = useState(false);
 
-  const { gameState, usersInGame, player } = useAppSelector(
-    (state) => state.quiz
-  );
+  const { gameState, player } = useAppSelector((state) => state.quiz);
 
   //use signalrcontext to maintain a connection *it still disconnects and reconnects automatically though
   const connection = useContext(SignalRContext);
 
   //Signals to send through signalRconnection to signalRHub
   const {
-    groupIncorrectAnswerEvent,
-    groupIncorrectAnswerSignal,
-    groupBuzzInSignal,
-    groupScoreEvent,
-    groupScoreSignal,
-    groupBuzzInEvent,
-    groupWinnerSignal,
-    startGameSignal,
-    startGameEvent,
+    //groupIncorrectAnswerEvent,
+    //groupIncorrectAnswerSignal,
+    //groupBuzzInSignal,
+    //groupScoreEvent,
+    //groupScoreSignal,
+    //groupBuzzInEvent,
+    //groupWinnerSignal,
+    //startGameSignal,
+    //startGameEvent,
 
-    leaveGameSignal,
-    winnerEvent,
-    incrementQuestionIndexEvent,
-    groupIncrementQuestionIndexSignal,
-    playerAddedToGameEvent,
+    //leaveGameSignal,
+    //winnerEvent,
+    //incrementQuestionIndexEvent,
+    //groupIncrementQuestionIndexSignal,
+    //playerAddedToGameEvent,
 
     createOrJoinGroupSignal,
   } = connection.connection;
 
-  const dispatch = useAppDispatch();
+  console.log("QuizBowl");
+  //const gameJoinedOnHub = false;
+  //const dispatch = useAppDispatch();
 
-  const playerName = useMemo(() => player?.userName, [player?.userName]);
-  /* const relevantPlayerDetails = useMemo(
-    () => [
-      player?.email,
-      player?.gameName,
-      player?.gameStateId,
-      player?.gamesJoined,
-      player?.incorrect,
-      player?.nextQuestion,
-      player?.ready,
-      player?.userName,
-    ],
-    [
-      player?.email,
-      player?.gameName,
-      player?.gameStateId,
-      player?.gamesJoined,
-      player?.incorrect,
-      player?.nextQuestion,
-      player?.ready,
-      player?.userName,
-    ]
-  ); */
-  const navigate = useNavigate();
+  //const playerName = useMemo(() => player?.userName, [player?.userName]);
 
+  //const navigate = useNavigate();
+  //let QI = 0;
+  /*
   useEffect(() => {
     console.log("player added to game event");
     playerAddedToGameEvent((playerTemp: Player, tempGameState: GameState) => {
+      console.log(playerTemp);
+      console.log(tempGameState);
+
       //console.log("player added to game event");
-      if (playerName == playerTemp.userName) {
+      /*if (playerName == playerTemp.userName) {
         if (playerTemp) {
           const tempPlayer: Player = {
             ...playerTemp,
@@ -107,11 +93,13 @@ export default function QuizBowl() {
             setGameJoinedOnHub(true);
           }
         }
+        // QI = tempGameState.id;
+      }*/
+  //   });
+  // });
 
-        setQI(tempGameState.questionIndex);
-      }
-    });
-  }, [playerAddedToGameEvent, dispatch, playerName]);
+  //setGameJoinedOnHub((c) => c);
+  //setQI(QI)
 
   //This is called by button click and sends signal to SignalR that current player is joining the given game
   function joinGameOnHub() {
@@ -126,6 +114,19 @@ export default function QuizBowl() {
     }
   }
 
+  useEffect(() => {
+    console.log("fetch questions");
+    fetch(import.meta.env.VITE_API_URL + "/questions")
+      .then((response) => response.json())
+      .then((data: Question[]) => {
+        setQuestions(data);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  /*
   //Called either when pressing Leave Button before joining hub or after joining hub and pressing
   //leave hub button.  dispatches leaveGame event which updates the player and our player state
   function leaveGameOnHub() {
@@ -175,22 +176,18 @@ export default function QuizBowl() {
   useEffect(() => {
     console.log("group score event");
     groupScoreEvent((newPlayer: Player) => {
-      //console.log("group score event");
+      //If the score was made by you update yourself
       if (playerName == newPlayer.userName) {
         newPlayer.incorrect = false;
         dispatch(updatePlayer(newPlayer)).then(() => {
           if (newPlayer.gameStateId)
             dispatch(updateUsersInGameWithPlayer(newPlayer));
         });
-      } else {
-        if (newPlayer.gameStateId)
-          dispatch(updateUsersInGameWithPlayer(newPlayer));
-        {
-          dispatch(updatePlayerForNextQuestion(newPlayer)).then(() => {
-            if (newPlayer.gameStateId)
-              dispatch(updateUsersInGameWithPlayer(newPlayer));
-          });
-        }
+      }
+      //leave everyone else alone. For the players in this game on the client side
+      //make them all ready
+      else {
+        dispatch(updateMakeAllPlayersInGameReady());
       }
 
       setBuzzIn(false);
@@ -248,30 +245,11 @@ export default function QuizBowl() {
     //  //console.log(userName);
   }, [groupIncorrectAnswerEvent, dispatch, playerName]);
 
-  useEffect(() => {
-    console.log("fetch questions");
-    fetch(import.meta.env.VITE_API_URL + "/questions")
-      .then((response) => response.json())
-      .then((data: Question[]) => {
-        setQuestions(data);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
 
   useEffect(() => {
     console.log("Inc question index");
-    incrementQuestionIndexEvent((tempPlayer: Player, questionIndex: number) => {
-      //console.log("inc question");
-      tempPlayer.incorrect = false;
-      tempPlayer.ready = false;
-
-      dispatch(updatePlayer(tempPlayer)).then(() => {
-        if (tempPlayer.gameStateId)
-          dispatch(updateUsersInGameWithPlayer(tempPlayer));
-      });
-
+    incrementQuestionIndexEvent((questionIndex: number) => {
+      dispatch(updateMakeAllPlayersInGameReady());
       setQI(questionIndex);
       setBuzzIn(false);
     });
@@ -325,11 +303,8 @@ export default function QuizBowl() {
   useEffect(() => {
     console.log("group buzz in");
     groupBuzzInEvent((userName) => {
-      //console.log("Group buzz in event");
-      if (playerName == userName) {
-        setBuzzedInPlayer(userName);
-        setBuzzIn(true);
-      }
+      setBuzzedInPlayer(userName);
+      setBuzzIn(true);
     });
   }, [groupBuzzInEvent, playerName]);
 
@@ -342,133 +317,158 @@ export default function QuizBowl() {
         gameState.id
       );
   }
+  */
 
-  let disable: boolean;
-  if (buzzedIn) disable = true;
+  //let disable: boolean;
+  //if (buzzedIn) disable = true;
 
   //console.log("QuizBowl");
   //console.log(gameState);
   //console.log(player);
   return (
-    <Paper elevation={3}>
-      <Typography variant="h4" mb="30px" className="generalHeading">
-        {gameState?.gameName}
-      </Typography>
-      <Typography variant="h6" mb="30px" className="scoreHeading">
-        Target Score : {gameState?.scoreToWin}
-      </Typography>
-      <Box className="buttonBox">
-        {!gameJoinedOnHub && (
-          <Box>
-            <Button
-              type="button"
-              className="buttonBox"
-              variant="contained"
-              onClick={joinGameOnHub}
-            >
-              Join Game on Hub
-            </Button>
-            <Button
-              type="button"
-              className="buttonBox"
-              variant="contained"
-              onClick={leaveGameOnHub}
-            >
-              Leave Game
-            </Button>
-          </Box>
-        )}
-        {gameJoinedOnHub && (
-          <Box display="flex">
-            <Button
-              type="button"
-              className="buttonBox"
-              variant="contained"
-              onClick={leaveGameOnHub}
-            >
-              Leave Game on Hub
-            </Button>
+    <Container component="main" maxWidth="xl">
+      <CssBaseline />
+      <Box
+        sx={{
+          marginTop: 8,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant="h4">React Quiz Bowl App</Typography>
+      </Box>
+    </Container> /*
+        <Paper elevation={3}>
+          <Typography variant="h4" mb="30px" className="generalHeading">
+            {gameState?.gameName}
+          </Typography>
+          <Typography variant="h6" mb="30px" className="scoreHeading">
+            Target Score : {gameState?.scoreToWin}
+          </Typography>
+          <Box className="buttonBox">
+            {!gameJoinedOnHub && (
+              <Box>
+                <Button
+                  type="button"
+                  className="buttonBox"
+                  variant="contained"
+                  onClick={joinGameOnHub}
+                >
+                  Join Game on Hub
+                </Button>
+                <Button
+                  type="button"
+                  className="buttonBox"
+                  variant="contained"
+                  //   onClick={leaveGameOnHub}
+                  onClick={() => alert("hi")}
+                >
+                  Leave Game
+                </Button>
+              </Box>
+            )}
+            {gameJoinedOnHub && (
+              <Box display="flex">
+                <Button
+                  type="button"
+                  className="buttonBox"
+                  variant="contained"
+                  // onClick={leaveGameOnHub}
+                  onClick={() => alert("hi")}
+                >
+                  Leave Game on Hub
+                </Button>
 
-            {player && !startGame && (
-              <Button
-                type="button"
-                className="buttonBox"
-                variant="contained"
-                onClick={startGameNow}
-              >
-                Start
-              </Button>
+                {player && !startGame && (
+                  <Button
+                    type="button"
+                    className="buttonBox"
+                    variant="contained"
+                    // onClick={startGameNow}
+                    onClick={() => alert("hi")}
+                  >
+                    Start
+                  </Button>
+                )}
+              </Box>
             )}
           </Box>
-        )}
+          {startGame && !isLoading && (
+            <QuestionBox
+              //  onClick={incrementSignal}
+              onClick={() => alert("hi")}
+              questions={questions}
+              questionIndex={0}
+            />
+          )}
+          {startGame &&
+            usersInGame &&
+            gameState &&
+            usersInGame.map((mappedPlayer) => (
+              <Box key={mappedPlayer.userName} mb="30px">
+                <Card>
+                  <Typography className="generalHeading" variant="h6">
+                    Player {mappedPlayer.userName}
+                  </Typography>
+                  <Typography className="generalHeading2" variant="h6">
+                    Score {mappedPlayer.score}
+                  </Typography>
+
+                  {player &&
+                    !player.incorrect &&
+                    player.userName == mappedPlayer.userName && (
+                      <Box className="buttonBox">
+                        <Button
+                          type="button"
+                          disabled={disable}
+                          onClick={() => {
+                            groupBuzzInSignal(
+                              player.userName,
+                              gameState.gameName
+                            );
+                            setBuzzIn(true);
+                          }}
+                        >
+                          Buzz In
+                        </Button>
+                      </Box>
+                    )}
+
+                  {player &&
+                    buzzedIn &&
+                    !player.incorrect &&
+                    buzzedInPlayer == mappedPlayer.userName &&
+                    mappedPlayer.userName == player.userName && (
+                      <Box className="buttonBox">
+                        <Box component="form" onSubmit={(e) => alert(e)}>
+                          <input
+                            type="text"
+                            onChange={(e) => setAnswer(e.target.value)}
+                            value={answer}
+                          />
+                          <Button type="submit">Check Answer</Button>
+                        </Box>
+                      </Box>
+                    )}
+                  {player &&
+                    player.incorrect &&
+                    mappedPlayer.userName == player.userName && (
+                      <Box className="buttonBox">
+                        <Box>
+                          <Typography>
+                            Incorrect Answer given this round. Wait for next
+                            round
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+                </Card>
+              </Box>
+            ))}
+        </Paper>
+        <QuizBowl></QuizBowl>
       </Box>
-      {startGame && !isLoading && (
-        <QuestionBox
-          onClick={incrementSignal}
-          questions={questions}
-          questionIndex={questionIndex}
-        />
-      )}
-      {startGame &&
-        usersInGame &&
-        gameState &&
-        usersInGame.map((mappedPlayer) => (
-          <Box key={mappedPlayer.userName} mb="30px">
-            <Card>
-              <Typography className="generalHeading" variant="h6">
-                Player {mappedPlayer.userName}
-              </Typography>
-              <Typography className="generalHeading2" variant="h6">
-                Score {mappedPlayer.score}
-              </Typography>
-
-              {player &&
-                !player.incorrect &&
-                player.userName == mappedPlayer.userName && (
-                  <Box className="buttonBox">
-                    <Button
-                      type="button"
-                      disabled={disable}
-                      onClick={() => {
-                        groupBuzzInSignal(player.userName, gameState.gameName);
-                        setBuzzIn(true);
-                      }}
-                    >
-                      Buzz In
-                    </Button>
-                  </Box>
-                )}
-
-              {player &&
-                buzzedIn &&
-                !player.incorrect &&
-                buzzedInPlayer == mappedPlayer.userName &&
-                mappedPlayer.userName == player.userName && (
-                  <Box className="buttonBox">
-                    <Box component="form" onSubmit={(e) => checkAnswer(e)}>
-                      <input
-                        type="text"
-                        onChange={(e) => setAnswer(e.target.value)}
-                        value={answer}
-                      />
-                      <Button type="submit">Check Answer</Button>
-                    </Box>
-                  </Box>
-                )}
-              {player &&
-                player.incorrect &&
-                mappedPlayer.userName == player.userName && (
-                  <Box className="buttonBox">
-                    <Box>
-                      <Typography>
-                        Incorrect Answer given this round. Wait for next round
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-            </Card>
-          </Box>
-        ))}
-    </Paper>
+    </Container>*/
   );
 }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(QuizBowlContext))]
-    [Migration("20231031210218_RemoveAnnotation")]
-    partial class RemoveAnnotation
+    [Migration("20231107011841_DropMessageindexGameState")]
+    partial class DropMessageindexGameState
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,7 +34,7 @@ namespace API.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("GameName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("MaxPlayers")
                         .HasColumnType("int");
@@ -49,6 +49,10 @@ namespace API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GameName")
+                        .IsUnique()
+                        .HasFilter("[GameName] IS NOT NULL");
 
                     b.ToTable("GameStates");
                 });
@@ -69,6 +73,9 @@ namespace API.Migrations
 
                     b.Property<int?>("GameStateId")
                         .HasColumnType("int");
+
+                    b.Property<string>("GamesJoined")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("Incorrect")
                         .HasColumnType("bit");
@@ -209,13 +216,13 @@ namespace API.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "06b1af0e-03aa-4610-9f22-f8634497e9f2",
+                            Id = "85682b75-8f2c-47c6-a4d9-3e0fb0f886bd",
                             Name = "Member",
                             NormalizedName = "MEMBER"
                         },
                         new
                         {
-                            Id = "a72c5454-b94a-4b74-a9f1-447732bf7a48",
+                            Id = "acd2bc56-7593-46e7-9b94-238f42bff202",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });

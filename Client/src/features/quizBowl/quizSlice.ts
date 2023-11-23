@@ -4,12 +4,14 @@ import { router } from "../../app/router/Routes";
 import { GameState } from "./GameState";
 import { Player } from "./Player";
 import axios from "axios";
+import { Question } from "../../question";
 interface QuizState {
   gameState: GameState | null;
   player: Player | null;
   usersInGame: Player[] | null;
   gameList: GameState[] | null;
   errorInQuizSlice: string;
+  questions: Question[];
 }
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 const initialState: QuizState = {
@@ -18,16 +20,26 @@ const initialState: QuizState = {
   gameList: null,
   usersInGame: [],
   errorInQuizSlice: "",
+  questions: [],
 };
 
+export const getQuestions = createAsyncThunk<Question[]>(
+  "question/getQuestions",
+  async (_, thunkAPI) => {
+    try {
+      return await agent.Question.getQuestions();
+    } catch (error) {
+      return thunkAPI.rejectWithValue({ error: error });
+    }
+  }
+);
 //Uses user from account slice to create a player with their email and username
 export const createOrGetPlayer = createAsyncThunk<Player, Player>(
   "player/createOrReturn",
   async (data: Player, thunkAPI) => {
     try {
       const player = await agent.Player.createOrReturn(data);
-      //console.log(player);
-      //console.log("is the player");
+
       const currentPlayer: Player = {
         ...player,
 
@@ -127,6 +139,8 @@ export const createGame = createAsyncThunk<
     const game: GameState = await agent.Game.create(data);
 
     const player = localStorage.getItem("player") || null;
+    console.log(player);
+    console.log("From local storage");
     let currentPlayer: Player = {
       userName: "",
       email: "",
@@ -268,6 +282,7 @@ export const loser = createAsyncThunk<[GameState, Player], [GameState, Player]>(
         scoreToWin: data[0].scoreToWin,
         maxPlayers: data[0].maxPlayers,
         questionIndex: data[0].questionIndex,
+
         //  buzzedInPlayerId: data[0].buzzedInPlayerId,
       };
       localStorage.setItem("game", JSON.stringify(currentGameState));
@@ -301,12 +316,29 @@ export const quizSlice = createSlice({
       state.usersInGame = action.payload;
     },
 
+    //players update themselves on their turn. you just update your local copy but this can cause a race condition.
     updateUsersInGameWithPlayer: (state, action) => {
       if (state.usersInGame) {
         const index: number = state.usersInGame?.findIndex(
-          (user) => user.id == action.payload.id
+          (user) => user.email == action.payload.email
         );
-        state.usersInGame[index] = { ...action.payload };
+
+        if (index > -1) state.usersInGame[index] = { ...action.payload };
+        else state.usersInGame.push(...action.payload);
+      }
+    },
+    updateMakeAllPlayersInGameReady: (state) => {
+      if (state.usersInGame) {
+        const updateUsersArray: Player[] = state.usersInGame?.map((player) => {
+          const tempPlayer: Player = {
+            ...player,
+            ready: false,
+            nextQuestion: false,
+            incorrect: false,
+          };
+          return tempPlayer;
+        });
+        state.usersInGame = updateUsersArray;
       }
     },
   },
@@ -346,6 +378,9 @@ export const quizSlice = createSlice({
       if (state.player)
         localStorage.setItem("player", JSON.stringify(state.player));
       // router.navigate("/Loser");
+    });
+    builder.addCase(getQuestions.fulfilled, (state, action) => {
+      state.questions = action.payload;
     });
     builder.addCase(createGame.fulfilled, (state, action) => {
       if (action.payload[3] == "Duplicate Game Created") {
@@ -402,5 +437,8 @@ export const quizSlice = createSlice({
   },
 });
 
-export const { updateUsersInGameWithPlayer, updateUsersInGame } =
-  quizSlice.actions;
+export const {
+  updateUsersInGameWithPlayer,
+  updateUsersInGame,
+  updateMakeAllPlayersInGameReady,
+} = quizSlice.actions;

@@ -98,11 +98,15 @@ const Player = {
   updatePlayer: (values: Player) =>
     requests.put("players/" + values.id, values),
 };
+const Question = {
+  getQuestions: () => requests.get("questions"),
+};
 const agent = {
   Account,
   Game,
   Player,
   TestErrors,
+  Question,
 };
 
 export default agent;

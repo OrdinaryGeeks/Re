@@ -6,13 +6,17 @@ import ContactPage from "../../features/contact/ContactPage";
 import Login from "../../features/account/Login";
 import Register from "../../features/account/Register";
 
-import GamePage from "../../features/Game/GamePage";
 import Lobby from "../../features/quizBowl/Lobby";
 import CreateGame from "../../features/quizBowl/CreateGame";
 import Winner from "../../features/quizBowl/Winner";
 import Loser from "../../features/quizBowl/Loser";
 import NotFound from "../errors/NotFound";
 import ServerError from "../errors/ServerError";
+//import QuizBowlPage from "../../features/quizBowl/QuizBowlPage";
+import Message from "../../features/quizBowl/Message";
+import QuizBowlHooks from "../../features/quizBowl/QuizBowlHooks";
+//import QuizBowlPage from "../../features/quizBowl/QuizBowlPage";
+//import Message from "../../features/quizBowl/Message";
 
 export const router = createBrowserRouter([
   {
@@ -24,13 +28,14 @@ export const router = createBrowserRouter([
       { path: "/contact", element: <ContactPage /> },
       { path: "/login", element: <Login /> },
       { path: "/register", element: <Register /> },
-      { path: "/game", element: <GamePage /> },
+      { path: "/game", element: <QuizBowlHooks /> },
       { path: "/lobby", element: <Lobby /> },
       { path: "/createGame", element: <CreateGame /> },
       { path: "/winner", element: <Winner /> },
       { path: "/loser", element: <Loser /> },
       { path: "/server-error", element: <ServerError /> },
       { path: "/not-found", element: <NotFound /> },
+      { path: "/Message", element: <Message /> },
 
       { path: "/register", element: <Register /> },
       { path: "*", element: <Navigate replace to="/not-found" /> },

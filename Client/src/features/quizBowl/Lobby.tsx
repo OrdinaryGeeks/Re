@@ -1,6 +1,6 @@
 import { Container, CssBaseline, Box, Button, Typography } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "../../app/Store/configureStore";
-import { leaveGame, getGames } from "./quizSlice";
+import { leaveGame, getGames, getQuestions } from "./quizSlice";
 import { Player } from "./Player";
 import { GameState } from "./GameState";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -38,6 +38,10 @@ export default function Lobby() {
       dispatch(leaveGame(newPlayer));
     }
   }
+
+  useEffect(() => {
+    dispatch(getQuestions());
+  }, [dispatch]);
 
   useEffect(() => {
     if (gameState)

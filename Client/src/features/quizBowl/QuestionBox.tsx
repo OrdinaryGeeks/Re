@@ -1,13 +1,14 @@
 import { Card, Typography, Box, Button } from "@mui/material";
 
-import { Question } from "../../question";
 import { MouseEventHandler } from "react";
+import { useAppSelector } from "../../app/Store/configureStore";
 
 export default function QuestionBox(props: {
   onClick: MouseEventHandler;
-  questions: Question[];
+
   questionIndex: number;
 }) {
+  const { questions } = useAppSelector((store) => store.quiz);
   // const [loading, setLoading] = useState(true);
   //const [questions, setQuestions] = useState<Question[]>([]);
 
@@ -20,13 +21,10 @@ export default function QuestionBox(props: {
         <Card>
           <Typography className="generalHeading" mb="10px" variant="h6">
             Current Question{" "}
-            {
-              props.questions[props.questionIndex % props.questions.length]
-                .points
-            }
+            {questions[props.questionIndex % questions.length].points}
           </Typography>
           <Typography className="generalHeading2" mb="10px" variant="h6">
-            {props.questions[props.questionIndex % props.questions.length].text}
+            {questions[props.questionIndex % questions.length].text}
           </Typography>
           <Box className="buttonBox">
             <Button variant="contained" type="button" onClick={props.onClick}>

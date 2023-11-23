@@ -26,16 +26,7 @@ namespace API.Hubs
         }
 
 //Believe this is umused implementation
-        public async Task LeaveGame(string gameName, string userName, int userID)
-        {
 
-
-            if(gameName != null)
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, gameName);
-         
-            await Clients.Groups(gameName).SendAsync("playerLeftGame", userName);
-
-        }
 
 
 //unused implementation
@@ -51,9 +42,9 @@ await Clients.Groups(gameName).SendAsync("GameCheck");
 }
 
 //send group start message
-    public async Task StartGame(string gameName)
+    public async Task StartGame(GameState gameState)
     {
-        await Clients.Groups(gameName).SendAsync("StartGame", gameName);
+        await Clients.Groups(gameState.GameName).SendAsync("StartGame", gameState);
     }
 
     //unused implementation
@@ -86,6 +77,22 @@ await Clients.Groups(gameName).SendAsync("GameCheck");
 
 
         }
+
+        public async Task LeaveGame(GameState gameState, Player player)
+        {
+         string[] playerJoinedGames = player.GamesJoined.Split(";");
+              
+        foreach(var joinedGame in playerJoinedGames)
+         {
+         await Groups.RemoveFromGroupAsync(Context.ConnectionId, joinedGame);
+         }
+        player.GamesJoined = "";
+        
+
+        await Clients.All.SendAsync("playerLeftGame", player, gameState);
+
+
+        }
         public  async Task CreateOrJoinGame(GameState gameState,  Player player)
     {
          
@@ -99,14 +106,9 @@ await Clients.Groups(gameName).SendAsync("GameCheck");
 
         await Groups.AddToGroupAsync(Context.ConnectionId, gameState.GameName);
          player.GamesJoined = gameState.GameName+";";
-         await Clients.Groups(gameState.GameName).SendAsync("playerAddedToGame", player, gameState);
-        // await Groups.AddToGroupAsync(Context.ConnectionId, gameState.GameName);
-         
-         
-
         
-      //  await Clients.Groups(gameState.GameName).SendAsync("playerAddedToGame", player, gameState);
-
+         await Clients.All.SendAsync("playerAddedToGame", player, gameState);
+    
     }
 
 
@@ -121,16 +123,24 @@ await Clients.Groups(gameName).SendAsync("GameCheck");
 
             await _context.SaveChangesAsync();
 
-            await Clients.Groups(gameName).SendAsync("incrementQuestionIndex", player, game.QuestionIndex);
+            await Clients.Groups(gameName).SendAsync("incrementQuestionIndex", game.QuestionIndex);
             
 
         }
   
-
-//set the buzzin event and user so that only one person can enter an answer at a time
-    public async Task GroupBuzzIn(string user, string gameName)
+   public async Task NewMessage(string user, string message)
     {
-        await Clients.Group(gameName).SendAsync("groupBuzzIn", user);
+        await Clients.All.SendAsync("messageReceived", user, message);
+    }
+
+       public async Task NewMessage2(string user, string message)
+    {
+        await Clients.All.SendAsync("messageReceived2", user, message);
+    }
+//set the buzzin event and user so that only one person can enter an answer at a time
+    public async Task GroupBuzzIn(string userName, string gameName)
+    {
+        await Clients.Group(gameName).SendAsync("groupBuzzIn", userName);
     }
  
 

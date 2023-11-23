@@ -58,10 +58,12 @@ namespace API.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    GameName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GameName = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ScoreToWin = table.Column<int>(type: "int", nullable: false),
-                    MaxPlayers = table.Column<int>(type: "int", nullable: false)
+                    MaxPlayers = table.Column<int>(type: "int", nullable: false),
+                    QuestionIndex = table.Column<int>(type: "int", nullable: false),
+                    MessageIndex = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -77,7 +79,12 @@ namespace API.Migrations
                     UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Score = table.Column<int>(type: "int", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    GameStateId = table.Column<int>(type: "int", nullable: true)
+                    GameStateId = table.Column<int>(type: "int", nullable: true),
+                    GameName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Incorrect = table.Column<bool>(type: "bit", nullable: false),
+                    Ready = table.Column<bool>(type: "bit", nullable: false),
+                    NextQuestion = table.Column<bool>(type: "bit", nullable: false),
+                    GamesJoined = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -211,8 +218,8 @@ namespace API.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "0cb1aac8-fea9-49eb-80bc-a588ecbd6a85", null, "Admin", "ADMIN" },
-                    { "488d8c91-b999-46e3-af4a-70123cfba49f", null, "Member", "MEMBER" }
+                    { "07465430-cece-4a58-8bca-d6957ba4a003", null, "Member", "MEMBER" },
+                    { "10bcf57d-9db8-4633-bee5-20a800f6914d", null, "Admin", "ADMIN" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -253,6 +260,13 @@ namespace API.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GameStates_GameName",
+                table: "GameStates",
+                column: "GameName",
+                unique: true,
+                filter: "[GameName] IS NOT NULL");
         }
 
         /// <inheritdoc />
