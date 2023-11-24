@@ -50,12 +50,11 @@ export const createOrGetPlayer = createAsyncThunk<Player, Player>(
         gameName: "",
       };
 
-      //console.log(currentPlayer);
       await agent.Player.updatePlayer(currentPlayer);
       const getThePlayer: Player = await agent.Player.getPlayer(
         currentPlayer.id
       );
-      // console.log(getThePlayer);
+
       return getThePlayer;
     } catch (error) {
       return thunkAPI.rejectWithValue({ error: error });
@@ -100,8 +99,7 @@ export const updatePlayerForNextQuestion = createAsyncThunk<Player, Player>(
         incorrect: false,
       };
       await agent.Player.updatePlayer(newPlayer);
-      //  console.log(data);
-      //  console.log("was the data");
+
       return newPlayer;
     } catch (error) {
       return thunkAPI.rejectWithValue({ error: error });
@@ -114,17 +112,14 @@ export const joinGame = createAsyncThunk<
   [Player, GameState]
 >("game/joinGame", async (data, thunkAPI) => {
   try {
-    // console.log(data[0]);
-    //console.log(data[1]);
-    //console.log("join game");
     const newPlayer: Player = {
       ...data[0],
       gameStateId: data[1].id,
       gamesJoined: data[1].gameName + ";",
     };
-    //  console.log(newPlayer);
+
     await agent.Player.updatePlayer(newPlayer);
-    // console.log(newPlayer);
+
     return [newPlayer, data[1]];
   } catch (error) {
     return thunkAPI.rejectWithValue({ error: error });
@@ -139,8 +134,7 @@ export const createGame = createAsyncThunk<
     const game: GameState = await agent.Game.create(data);
 
     const player = localStorage.getItem("player") || null;
-    console.log(player);
-    console.log("From local storage");
+
     let currentPlayer: Player = {
       userName: "",
       email: "",
@@ -159,21 +153,16 @@ export const createGame = createAsyncThunk<
       currentPlayer = JSON.parse(player);
       if (game.gameName == "Duplicate Game Created") {
         const errorInCreate: string = "Duplicate Game Created";
-        //inGamePlayers.push(currentPlayer);
+
         return [game, inGamePlayers, currentPlayer, errorInCreate];
       }
-      // console.log(game.id);
 
       localStorage.setItem("game", JSON.stringify(game));
-
-      //   const gameState: GameState = JSON.parse(game);
-      //  const currentPlayer: Player = JSON.parse(player);
-      //  if (gameState.players.find((x) => x == currentPlayer) == undefined)
 
       currentPlayer = JSON.parse(player);
       currentPlayer.gamesJoined += data.gameName + ";";
       currentPlayer.gameStateId = data.id;
-      //  alert(currentPlayer.gameStateId);
+
       await agent.Player.updateGameState(currentPlayer);
     }
 
@@ -187,8 +176,6 @@ export const getUsersInGame = createAsyncThunk<Player[], number>(
   "game/getUsersInGame",
   async (data, thunkAPI) => {
     try {
-      // alert(data);
-
       return await agent.Game.getPlayersInGame(data);
     } catch (error) {
       return thunkAPI.rejectWithValue({ error: error });
@@ -200,10 +187,8 @@ export const updatePlayer = createAsyncThunk<Player, Player>(
   "player/updatePlayer",
   async (data, thunkAPI) => {
     try {
-      //  console.log("in PlayerUPDATEPLAYER");
       await agent.Player.updatePlayer(data);
-      //  console.log(data);
-      //  console.log("was the data");
+
       return data;
     } catch (error) {
       return thunkAPI.rejectWithValue({ error: error });
@@ -223,21 +208,35 @@ export const getPlayer = createAsyncThunk<Player, number>(
   }
 );
 
-export const winner = createAsyncThunk<
-  [GameState, Player],
-  [GameState, Player]
->("game/winner", async (data, thunkAPI) => {
-  try {
-    await agent.Player.updatePlayer(data[1]);
+export const winner = createAsyncThunk<[GameState, Player], [number, number]>(
+  "game/winner",
+  async (data, thunkAPI) => {
+    try {
+      const player = await agent.Player.finishedGame(data[1]);
+      const game = await agent.Game.wonGame(data[0]);
+      localStorage.setItem("game", JSON.stringify(game));
 
-    localStorage.setItem("game", JSON.stringify(data[0]));
-    await agent.Game.updateGame(data[0]);
-    return [data[0], data[1]];
-  } catch (error) {
-    return thunkAPI.rejectWithValue({ error: error });
+      return [game, player];
+    } catch (error) {
+      return thunkAPI.rejectWithValue({ error: error });
+    }
   }
-});
+);
 
+export const loser = createAsyncThunk<[GameState, Player], [number, number]>(
+  "game/loser",
+  async (data, thunkAPI) => {
+    try {
+      const player = await agent.Player.finishedGame(data[1]);
+      const game = await agent.Game.lostGame(data[0]);
+      localStorage.setItem("game", JSON.stringify(game));
+
+      return [game, player];
+    } catch (error) {
+      return thunkAPI.rejectWithValue({ error: error });
+    }
+  }
+);
 export const gameStart = createAsyncThunk<boolean, number>(
   "game/gameStart",
   async (data, thunkAPI) => {
@@ -256,49 +255,6 @@ export const updateGame = createAsyncThunk<GameState, GameState>(
     try {
       await agent.Game.updateGame(data);
       return data;
-    } catch (error) {
-      return thunkAPI.rejectWithValue({ error: error });
-    }
-  }
-);
-export const loser = createAsyncThunk<[GameState, Player], [GameState, Player]>(
-  "game/loser",
-  async (data, thunkAPI) => {
-    try {
-      /*     const updatePlayer = data[1];
-      updatePlayer.gameName = "";
-      updatePlayer.gameStateId = null;
-      updatePlayer.score = 0;
- */
-      const currentPlayer: Player = {
-        userName: data[1].userName,
-        email: data[1].email,
-        id: data[1].id,
-        score: 0,
-        gameStateId: null,
-        nextQuestion: false,
-        ready: false,
-        gameName: "",
-        incorrect: false,
-        gamesJoined: "",
-      };
-
-      await agent.Player.updatePlayer(currentPlayer);
-
-      const currentGameState: GameState = {
-        id: data[0].id,
-        gameName: data[0].gameName,
-
-        status: "Finished",
-        scoreToWin: data[0].scoreToWin,
-        maxPlayers: data[0].maxPlayers,
-        questionIndex: data[0].questionIndex,
-
-        //  buzzedInPlayerId: data[0].buzzedInPlayerId,
-      };
-      localStorage.setItem("game", JSON.stringify(currentGameState));
-      await agent.Game.updateGame(currentGameState);
-      return [currentGameState, currentPlayer];
     } catch (error) {
       return thunkAPI.rejectWithValue({ error: error });
     }
@@ -334,7 +290,7 @@ export const quizSlice = createSlice({
           (user) => user.email == action.payload.email
         );
 
-        if (index > -1) state.usersInGame[index] = { ...action.payload };
+        if (index != -1) state.usersInGame[index] = { ...action.payload };
         else state.usersInGame.push(...action.payload);
       }
     },
@@ -384,6 +340,7 @@ export const quizSlice = createSlice({
     builder.addCase(winner.fulfilled, (state, action) => {
       state.gameState = { ...action.payload[0] };
       state.player = { ...action.payload[1] };
+
       if (state.player)
         localStorage.setItem("player", JSON.stringify(state.player));
     });
@@ -392,7 +349,6 @@ export const quizSlice = createSlice({
       state.player = { ...action.payload[1] };
       if (state.player)
         localStorage.setItem("player", JSON.stringify(state.player));
-      // router.navigate("/Loser");
     });
     builder.addCase(getQuestions.fulfilled, (state, action) => {
       state.questions = action.payload;
@@ -427,8 +383,6 @@ export const quizSlice = createSlice({
       state.gameState = { ...action.payload[1] };
 
       router.navigate("/Game");
-      // alert(state.player.userName);
-      // alert(state.gameState);
     });
     builder.addCase(leaveGame.fulfilled, (state, action) => {
       state.player = { ...action.payload };

@@ -56,33 +56,24 @@ export class signalRConnector {
       .withUrl(hubURL)
       .withAutomaticReconnect()
       .build();
-    // alert("In constructor");
+
     this.connection
       .start()
-      // .then(() => alert("connectionStartedafef"))
 
       .catch((err) => document.write(err));
 
     //Fired when you create a game or a player joins the game
     const opatg = (this.playerAddedToGameEvent = (onPlayerAddedToGame) => {
-      //  alert("player added to game event ");
       this.connection.on(
         "playerAddedToGame",
         (player, gameState, messageIndex) => {
-          //  alert("player added to game in the meat");
           onPlayerAddedToGame(player, gameState, messageIndex);
         }
       );
     });
 
     this.connection.off("playerAddedToGame", opatg);
-    /*   this.RemovePlayerAddedToGameEvent = (onRemovePlayerAddedToGame) => {
 
-      this.connection.off("playerAddedToGame, gameState, messageIndex",(player, oldGameState, oldMessageIndex) => {
-
-        onRemovePlayerAddedToGame(player, oldGameState, oldMessageIndex);
-      }
-    }; */
     this.events = (onMessageReceived) => {
       this.connection.on("messageReceived", (username, message) => {
         onMessageReceived(username, message);
@@ -164,31 +155,14 @@ export class signalRConnector {
     this.connection.onclose(() => {});
   }
 
-  public newMessage = (messages: string) => {
-    this.connection
-      .send("newMessage", "foo", messages)
-      .then(() => console.log("sent"));
-  };
-  public newMessage2 = (messages: string) => {
-    this.connection
-      .send("newMessage", "foo", messages)
-      .then(() => console.log("sent"));
-  };
   public isConnected = () => {
     return this.connection.state == signalR.HubConnectionState.Connected;
   };
 
   public createOrJoinGroupSignal = (gameState: GameState, player: Player) => {
-    // alert("sending cjgs");
-    //console.log(player);
-    // console.log(gameState);
     this.connection.send("CreateOrJoinGame", gameState, player);
-    // console.log("after sending");
   };
 
-  // public leaveCreateOrJoinGroupSignal = (gameState: GameState) => {
-  //  this.connection.off();
-  //};
   public startGameSignal = (gameName: string) => {
     this.connection.send("StartGame", gameName);
   };
@@ -224,7 +198,6 @@ export class signalRConnector {
     userName: string,
     gameID: number
   ) => {
-    // alert(gameName + " " + userName + " " + gameID);
     this.connection.send("GameCheckSignal", gameName, userName, gameID);
   };
 

@@ -44,7 +44,7 @@ await Clients.Groups(gameName).SendAsync("GameCheck");
 //send group start message
     public async Task StartGame(GameState gameState)
     {
-        await Clients.Groups(gameState.GameName).SendAsync("StartGame", gameState);
+        await Clients.Groups(gameState.GameName).SendAsync("StartGame", gameState.Id);
     }
 
     //unused implementation

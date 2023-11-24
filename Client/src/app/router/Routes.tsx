@@ -12,11 +12,8 @@ import Winner from "../../features/quizBowl/Winner";
 import Loser from "../../features/quizBowl/Loser";
 import NotFound from "../errors/NotFound";
 import ServerError from "../errors/ServerError";
-//import QuizBowlPage from "../../features/quizBowl/QuizBowlPage";
-import Message from "../../features/quizBowl/Message";
+
 import QuizBowlHooks from "../../features/quizBowl/QuizBowlHooks";
-//import QuizBowlPage from "../../features/quizBowl/QuizBowlPage";
-//import Message from "../../features/quizBowl/Message";
 
 export const router = createBrowserRouter([
   {
@@ -35,7 +32,6 @@ export const router = createBrowserRouter([
       { path: "/loser", element: <Loser /> },
       { path: "/server-error", element: <ServerError /> },
       { path: "/not-found", element: <NotFound /> },
-      { path: "/Message", element: <Message /> },
 
       { path: "/register", element: <Register /> },
       { path: "*", element: <Navigate replace to="/not-found" /> },

@@ -42,6 +42,48 @@ namespace API.Controllers
             return player;
         }
 
+
+        [HttpGet("playerFinishedGame/{id}")]
+        public async Task<ActionResult<Player>> PlayerFinishedGame(int id){
+
+                if(!PlayerExists(id))
+                {
+                    return NotFound();
+                }
+
+                Player player = _context.Players.Find(id);
+                player.Score = 0; 
+                player.GameName = "";
+                player.GameStateId=null;
+                player.Incorrect = false;
+                player.NextQuestion = false;
+                player.Ready = false;
+                
+                _context.Entry(player).State = EntityState.Modified;
+
+                   try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!PlayerExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return player;
+        }
+
+        
+
+
+      
         // PUT: api/Players/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]

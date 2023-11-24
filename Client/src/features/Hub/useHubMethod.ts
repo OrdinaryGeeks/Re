@@ -36,8 +36,6 @@ export function useHubMethod<T>(
 
       try {
         if (hubConnection) {
-          console.log("InvokePlayerGameState in usehubmethod " + method);
-
           const data = await hubConnection.invoke<T>(method, gameState, player);
 
           setStateIfMounted((s) => ({
@@ -62,8 +60,6 @@ export function useHubMethod<T>(
 
       try {
         if (hubConnection) {
-          console.log("invokeLeaveGame in usehubmethod " + "Leave game");
-
           const data = await hubConnection.invoke<T>(
             "LeaveGame",
             gameState,
@@ -87,43 +83,12 @@ export function useHubMethod<T>(
     [hubConnection, setStateIfMounted]
   );
 
-  /*  const invokeGameState = useCallback(
-    async (gameState: GameState) => {
-      setStateIfMounted((s) => ({ ...s, loading: true }));
-
-      try {
-        if (hubConnection) {
-          console.log("Invoke on Game State in usehubmethod");
-
-          //console.log(args);
-
-          const data = await hubConnection.invoke<T>("StartGame", gameState);
-
-          setStateIfMounted((s) => ({
-            ...s,
-            data: data,
-            loading: false,
-            error: undefined,
-          }));
-          return data;
-        } else {
-          throw new Error("hubConnection is not defined");
-        }
-      } catch (e) {
-        setStateIfMounted((s) => ({ ...s, error: e, loading: false }));
-      }
-    },
-    [hubConnection, setStateIfMounted]
-  ); */
-
   const invokeJoinGame = useCallback(
     async (gameState: GameState, player: Player) => {
       setStateIfMounted((s) => ({ ...s, loading: true }));
 
       try {
         if (hubConnection) {
-          console.log("InvokeJoinGame in usehubmethod");
-
           const data = await hubConnection.invoke<T>(
             "CreateOrJoinGame",
             gameState,
@@ -153,8 +118,6 @@ export function useHubMethod<T>(
 
       try {
         if (hubConnection) {
-          console.log("InvokeStartGame in usehubmethod");
-
           const data = await hubConnection.invoke<T>("StartGame", gameState);
 
           setStateIfMounted((s) => ({
@@ -180,8 +143,6 @@ export function useHubMethod<T>(
 
       try {
         if (hubConnection) {
-          console.log("Invoke Increment Question in usehubmethod");
-
           const data = await hubConnection.invoke<T>(
             "GroupScoreSignal",
             gameName,
@@ -211,8 +172,6 @@ export function useHubMethod<T>(
 
       try {
         if (hubConnection) {
-          console.log("Invoke Increment Question in usehubmethod");
-
           const data = await hubConnection.invoke<T>(
             "GroupWinner",
             player,
@@ -242,8 +201,6 @@ export function useHubMethod<T>(
 
       try {
         if (hubConnection) {
-          console.log("Invoke Increment Question in usehubmethod");
-
           const data = await hubConnection.invoke<T>(
             "GroupIncorrectAnswer",
             player,
@@ -272,8 +229,6 @@ export function useHubMethod<T>(
 
       try {
         if (hubConnection) {
-          console.log("Invoke Increment Question in usehubmethod");
-
           const data = await hubConnection.invoke<T>(
             "GroupBuzzIn",
             userName,
@@ -302,8 +257,6 @@ export function useHubMethod<T>(
 
       try {
         if (hubConnection) {
-          console.log("Invoke Increment Question in usehubmethod");
-
           const data = await hubConnection.invoke<T>(
             "IncrementQuestionIndex",
             gameName,
@@ -334,11 +287,7 @@ export function useHubMethod<T>(
 
       try {
         if (hubConnection) {
-          console.log("Invoke in usehubmethod");
-          console.log(args);
-          console.log(methodName);
-          console.log(hubConnection);
-          console.log(...args);
+      
           const data = await hubConnection.invoke<T>(methodName, ...args);
 
           setStateIfMounted((s) => ({

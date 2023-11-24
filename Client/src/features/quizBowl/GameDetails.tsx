@@ -17,7 +17,6 @@ export default function GameDetails({ game }: Props) {
   //talks to database in dispatch and associates the gamestate id with the player
   //It then retrieves a copy of the users in the game
   async function JoinGame(joinGameState: GameState) {
-    // console.log(joinGameState);
     if (player && joinGameState) {
       const newPlayer = {
         ...player,

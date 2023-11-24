@@ -84,6 +84,71 @@ namespace API.Controllers
             return NoContent();
         }
 
+        [HttpGet("winner/{id}")]
+         public async Task<ActionResult<GameState>> GameWon(int id)
+        {
+            if (!GameStateExists(id))
+            {
+                return NotFound();
+            }
+
+
+            GameState wonGame = _context.GameStates.Find(id);
+            wonGame.Status = "Winner";
+            _context.Entry(wonGame).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!GameStateExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return wonGame;
+        }
+
+            [HttpGet("loser/{id}")]
+         public async Task<ActionResult<GameState>> GameLost(int id)
+        {
+            if (!GameStateExists(id))
+            {
+                return NotFound();
+            }
+
+
+            GameState lostGame = _context.GameStates.Find(id);
+            lostGame.Status = "Loser";
+            _context.Entry(lostGame).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!GameStateExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return lostGame;
+        }
+        
+        
        [HttpGet("startGame/{id}")]
         public async Task<IActionResult> StartGame(int id)
         {

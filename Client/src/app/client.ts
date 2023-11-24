@@ -44,7 +44,7 @@ axios.interceptors.response.use(
         break;
       default:
         break;
-        console.log(error.message + "caught by interceptor");
+
         return Promise.reject(error.response);
     }
   }
@@ -72,6 +72,9 @@ const Game = {
   lobbyList: () => requests.get("games/lobby"),
   finishedList: () => requests.get("games/finished"),
   startGame: (value: number) => requests.get("startGame/" + value),
+  lostGame: (id: number) => requests.get("games/loser/" + id),
+  wonGame: (id: number) => requests.get("games/winner/" + id),
+
   updateGame: (values: GameState) => {
     requests.put("games/" + values.id, values);
   },
@@ -91,13 +94,14 @@ const Player = {
   createOrReturn: (values: any) =>
     requests.post("players/CreateIfNotExists", values),
   updateGameState: (values: Player) => {
-    //alert("players/" + values.id);
     requests.put("players/" + values.id, values);
   },
   updatePlayer2: (values: Player) =>
     requests.put2("players/" + values.id, values),
   updatePlayer: (values: Player) =>
     requests.put("players/" + values.id, values),
+  finishedGame: (id: number) =>
+    requests.get("players/playerFinishedGame/" + id),
 };
 const Question = {
   getQuestions: () => requests.get("questions"),

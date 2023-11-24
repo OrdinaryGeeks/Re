@@ -27,7 +27,6 @@ export default function Register() {
   });
 
   function handleApiErrors(errors: FieldValues) {
-    // console.log(errors);
     if (errors) {
       errors.forEach((error: string) => {
         if (error.includes("Password")) {

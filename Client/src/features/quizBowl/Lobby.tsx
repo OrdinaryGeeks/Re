@@ -14,7 +14,7 @@ export default function Lobby() {
   const { user } = useAppSelector((state) => state.account);
   const { player, gameState, gameList } = useAppSelector((state) => state.quiz);
   const navigate = useNavigate();
-  const [finished, setFinished] = useState(false);
+
   const dispatch = useAppDispatch();
   const [showGameList, setShowGameList] = useState(false);
   useEffect(() => {
@@ -42,15 +42,6 @@ export default function Lobby() {
   useEffect(() => {
     dispatch(getQuestions());
   }, [dispatch]);
-
-  useEffect(() => {
-    if (gameState)
-      setFinished(
-        gameState.status == "Winner" || gameState.status == "Loser"
-          ? true
-          : false
-      );
-  }, [gameState]);
 
   //Used Toggle Show Game List to display Games List
   function ToggleShowGameList() {
@@ -81,25 +72,30 @@ export default function Lobby() {
         <Box pr="20px" pl="20px" mb="30px">
           {player && <PlayerDetails />}
         </Box>
-        {gameState && finished && <GameInfo finished={finished} />}
-        {gameState && !finished && <GameInfo finished={finished} />}
-        {gameState && !finished && (
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-            onClick={LeaveGame}
-          >
-            Leave Game
-          </Button>
-        )}
+
+        {gameState && <GameInfo />}
+        {gameState &&
+          gameState.status != "Winner" &&
+          gameState.status != "Loser" && (
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              onClick={LeaveGame}
+            >
+              Leave Game
+            </Button>
+          )}
         {player == null && <PlayerHandle />}
-        {player && (!gameState || finished) && (
-          <NavLink to="/CreateGame">
-            <Typography variant="h6">Create Game</Typography>
-          </NavLink>
-        )}
+        {player &&
+          (!gameState ||
+            gameState.status == "Winner" ||
+            gameState.status == "Loser") && (
+            <NavLink to="/CreateGame">
+              <Typography variant="h6">Create Game</Typography>
+            </NavLink>
+          )}
         {player && (
           <Button
             fullWidth

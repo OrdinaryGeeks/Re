@@ -1,6 +1,3 @@
-//import { Box, Container, CssBaseline } from "@mui/material";
-//import Typography from "@material-ui/core/Typography";
-
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { SignalRContext } from "../signalR/signalRContext";
 import {
@@ -12,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { toast } from "react-toastify";
 import { useHubMethod } from "../Hub/useHubMethod";
 
 import { useAppSelector, useAppDispatch } from "../../app/Store/configureStore";
@@ -36,7 +34,7 @@ export default function QuizBowlHooks() {
   const [answer, setAnswer] = useState("");
   const [buzzedInPlayer, setBuzzedInPlayer] = useState("");
   const [buzzedIn, setBuzzedIn] = useState(false);
-
+  const [incorrect, setIncorrect] = useState(false);
   const [questionIndex, setQI] = useState(0);
   const {
     invokeJoinGame,
@@ -47,7 +45,7 @@ export default function QuizBowlHooks() {
     invokeWinner,
     invokeScore,
     invokeIncorrectAnswer,
-  } = useHubMethod(connection.connection, "NewMessage");
+  } = useHubMethod(connection.connection, "");
   const { gameState, player, usersInGame, questions } = useAppSelector(
     (state) => state.quiz
   );
@@ -55,6 +53,7 @@ export default function QuizBowlHooks() {
   const [startGame, setStartGame] = useState(false);
   const dispatch = useAppDispatch();
   const playerName = useMemo(() => player?.userName, [player?.userName]);
+  const playerID = useMemo(() => player?.id, [player?.id]);
   const gameID = useMemo(() => gameState?.id, [gameState?.id]);
 
   const renderCount = useRef(0);
@@ -70,7 +69,6 @@ export default function QuizBowlHooks() {
       playerTemp: Player,
       tempGameState: GameState
     ) => {
-      console.log("Player added to game");
       if (playerName == playerTemp.userName) {
         if (playerTemp) {
           const tempPlayer: Player = {
@@ -86,52 +84,59 @@ export default function QuizBowlHooks() {
             });
             setGameJoinedOnHub(() => true);
           }
+          toast.success("You have joined the game " + tempGameState.gameName);
         }
       } else {
         dispatch(updateUsersInGameWithPlayer(playerTemp));
+
+        toast.success(
+          playerTemp.userName + " has joined " + tempGameState.gameName
+        );
       }
     };
 
     const buzzedInMethod = (buzzedInUserName: string) => {
-      console.log("Buzzed In Username  " + buzzedInUserName);
       setBuzzedInPlayer(() => buzzedInUserName);
       setBuzzedIn(() => true);
+      toast.success(buzzedInUserName + " has buzzed In");
     };
 
     const incQIMethod = (newQuestionIndex: number) => {
-      console.log("Inc QI " + newQuestionIndex);
       dispatch(updateMakeAllPlayersInGameReady());
       setQI(() => newQuestionIndex);
       setBuzzedIn(() => false);
+      setIncorrect(() => false);
+      toast.success("Proceeding to next question");
     };
 
     const playerLeaveGameMethod = (player: Player, gameState: GameState) => {
-      console.log(player.userName);
-      console.log(gameState.gameName);
-      console.log("Player left game");
+      toast.success(player.userName + " has left " + gameState.gameName);
     };
 
-    const playerStartGameMethod = (newGameState: GameState) => {
-      if (gameID) {
-        console.log("start " + newGameState.gameName);
+    const playerStartGameMethod = (startGameID: number) => {
+      if (gameID && gameID == startGameID) {
         setStartGame(() => true);
-
+        toast.success("Game is Starting");
         dispatch(gameStart(gameID));
       }
     };
 
     const incorrectAnswerMethod = (incorrectPlayer: Player) => {
-      console.log("Incorrect answer event " + incorrectPlayer.userName);
       if (playerName) {
         if (incorrectPlayer.userName == playerName) {
+          setIncorrect(true);
           incorrectPlayer.incorrect = true;
           dispatch(updatePlayer(incorrectPlayer)).then(() => {
             if (incorrectPlayer.gameStateId)
               dispatch(updateUsersInGameWithPlayer(incorrectPlayer));
           });
+          toast.error("Incorrect Answer");
         } else {
           if (incorrectPlayer.gameStateId)
             dispatch(updateUsersInGameWithPlayer(incorrectPlayer));
+          toast.success(incorrectPlayer.userName + " gave Incorrect Answer");
+          setBuzzedIn(() => false);
+          setBuzzedInPlayer(() => "");
         }
       }
     };
@@ -140,60 +145,45 @@ export default function QuizBowlHooks() {
       winningPlayer: Player,
       resolvedGameState: GameState
     ) => {
-      if (playerName == winningPlayer.userName) {
+      if (
+        playerName == winningPlayer.userName &&
+        gameID == resolvedGameState.id
+      ) {
         {
-          winningPlayer = {
-            ...winningPlayer,
-            score: 0,
-            gameStateId: null,
-            nextQuestion: false,
-            ready: false,
-            gameName: "",
-          };
-          const ResolvedGameState = {
-            ...resolvedGameState,
-
-            status: "Winner",
-          };
-
-          dispatch(winner([ResolvedGameState, winningPlayer])).then(() =>
-            router.navigate("/Winner")
-          );
+          if (gameID == resolvedGameState.id && playerID) {
+            dispatch(winner([gameID, playerID])).then(() =>
+              router.navigate("/Winner")
+            );
+          }
         }
       } else {
-        winningPlayer = {
-          ...winningPlayer,
-          score: 0,
-          gameStateId: null,
-          nextQuestion: false,
-          ready: false,
-          gameName: "",
-        };
-        const ResolvedGameState = {
-          ...resolvedGameState,
-
-          status: "Loser",
-        };
-        dispatch(loser([ResolvedGameState, winningPlayer])).then(() =>
-          router.navigate("/Loser")
-        );
+        if (gameID == resolvedGameState.id && playerID) {
+          dispatch(loser([gameID, playerID])).then(() =>
+            router.navigate("/Loser")
+          );
+        }
       }
     };
 
     const playerScoreMethod = (playerWhoScored: Player) => {
       if (playerName == playerWhoScored.userName) {
         playerWhoScored.incorrect = false;
-        console.log(playerWhoScored.score);
+        setIncorrect(false);
         dispatch(updatePlayer(playerWhoScored)).then(() => {
           if (playerWhoScored.gameStateId)
             dispatch(updateUsersInGameWithPlayer(playerWhoScored));
         });
+
+        toast.success("You are Correct");
       }
       //leave everyone else alone. For the players in this game on the client side
       //make them all ready
       else {
+        setIncorrect(false);
         dispatch(updateUsersInGameWithPlayer(playerWhoScored));
         dispatch(updateMakeAllPlayersInGameReady());
+
+        toast.error(playerWhoScored.userName + " has scored");
       }
 
       setBuzzedIn(() => false);
@@ -224,14 +214,11 @@ export default function QuizBowlHooks() {
       connection.connection.off("Winner", winnerMethod);
       connection.connection.off("Group Correct Answer", playerScoreMethod);
     };
-  }, [connection.connection, dispatch, playerName, gameID]);
+  }, [connection.connection, dispatch, playerName, playerID, gameID]);
 
   //Called either when pressing Leave Button before joining hub or after joining hub and pressing
   //leave hub button.  dispatches leaveGame event which updates the player and our player state
   function leaveGameOnHub() {
-    if (!gameState || !player) {
-      console.log("one or other null");
-    }
     if (gameState && player) {
       const newPlayer: Player = {
         ...player,
@@ -241,7 +228,7 @@ export default function QuizBowlHooks() {
         ready: false,
         nextQuestion: false,
       };
-      console.log("leaveGameONHub Function");
+
       dispatch(leaveGame(newPlayer));
       setGameJoinedOnHub(false);
 
@@ -262,7 +249,6 @@ export default function QuizBowlHooks() {
   }
   function startGameNow() {
     if (gameState) {
-      console.log("SGN");
       invokeStartGame(gameState);
     }
   }
@@ -282,7 +268,6 @@ export default function QuizBowlHooks() {
           player.score + questions[questionIndex % questions.length].points >=
           gameState.scoreToWin
         ) {
-          //console.log(gameState);
           invokeWinner(player, gameState);
         } else {
           invokeScore(gameState.gameName, newPlayer);
@@ -376,7 +361,7 @@ export default function QuizBowlHooks() {
                 </Typography>
 
                 {player &&
-                  !player.incorrect &&
+                  !incorrect &&
                   player.userName == mappedPlayer.userName && (
                     <Box className="buttonBox">
                       <Button
@@ -395,7 +380,7 @@ export default function QuizBowlHooks() {
 
                 {player &&
                   buzzedIn &&
-                  !player.incorrect &&
+                  !incorrect &&
                   buzzedInPlayer == mappedPlayer.userName &&
                   mappedPlayer.userName == player.userName && (
                     <Box className="buttonBox">
@@ -410,7 +395,7 @@ export default function QuizBowlHooks() {
                     </Box>
                   )}
                 {player &&
-                  player.incorrect &&
+                  incorrect &&
                   mappedPlayer.userName == player.userName && (
                     <Box className="buttonBox">
                       <Box>

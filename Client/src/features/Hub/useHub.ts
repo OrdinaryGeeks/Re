@@ -15,24 +15,20 @@ export function useHub(hubConnection?: HubConnection) {
   const [error, setError] = useState();
 
   useEffect(() => {
-    console.log("useHub useEffect");
     setError(undefined);
 
     if (!hubConnection) {
-      console.log("!hubconnectoin");
       setHubConnectionState(HubConnectionState.Disconnected);
       return;
     }
 
-    //if (hubConnection.state !== hubConnectionState)
-    {
+    if (hubConnection.state !== hubConnectionState) {
       setHubConnectionState(hubConnection.state);
     }
 
     let isMounted = true;
     const onStateUpdatedCallback = () => {
       if (isMounted) {
-        console.log("ismountedonstateupdated");
         setHubConnectionState(hubConnection?.state);
       }
     };
@@ -41,8 +37,6 @@ export function useHub(hubConnection?: HubConnection) {
     hubConnection.onreconnecting(onStateUpdatedCallback);
 
     if (hubConnection.state === HubConnectionState.Disconnected) {
-      console.log(hubConnection.baseUrl);
-      console.log(hubConnection);
       const startPromise = hubConnection
         .start()
         .then(onStateUpdatedCallback)
@@ -51,17 +45,13 @@ export function useHub(hubConnection?: HubConnection) {
 
       return () => {
         startPromise.then(() => {
-          console.log("returning in usehub");
-          //  hubConnection.stop();
+          //stopping the hub here causes constant reconnection
+          // hubConnection.stop();
         });
         isMounted = false;
       };
     }
-
-    //  return () => {
-    // hubConnection.stop();
-    //   };
-  }, [hubConnection]);
+  }, [hubConnection, hubConnectionState]);
 
   return { hubConnectionState, error };
 }

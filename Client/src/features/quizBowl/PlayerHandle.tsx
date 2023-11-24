@@ -10,7 +10,6 @@ export default function PlayerHandle() {
   //populate a temp player object to push to the API. Sets the player in quiz slice in dispatch
   async function CreateOrGetPlayer() {
     if (user) {
-      // alert(user.userName);
       const tempPlayer: Player = {
         id: 1,
         userName: user.userName,

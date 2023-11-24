@@ -12,7 +12,6 @@ import { store } from "./app/Store/configureStore.ts";
 import { Provider } from "react-redux";
 import { SignalRProvider } from "./features/signalR/signalRContext.tsx";
 
-console.log("Main");
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <SignalRProvider>

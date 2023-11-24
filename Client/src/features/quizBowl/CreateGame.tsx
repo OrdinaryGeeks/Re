@@ -30,12 +30,11 @@ export default function CreateGame() {
     const userGame: GameState = {
       gameName: gameValues["gameName"],
       scoreToWin: gameValues["targetScore"],
-      // maxPlayers: gameValues["maxPlayers"],
+
       maxPlayers: 2,
       status: "Lobby",
       id: 0,
       questionIndex: 0,
-      messageIndex: 0,
     };
     await dispatch(createGame(userGame));
   }
