@@ -43,6 +43,12 @@ export default function HomePage() {
             block your opponent from buzzing in. Any player can skip to the next
             question.
           </Typography>
+          <Typography variant="body1">
+            There is an Angular Asp.Net Core Bootstrap app located at{" "}
+            <a href="https://www.alectosinterdimensionalblog.com">
+              Alectos Interdimensional Blog
+            </a>
+          </Typography>
         </Paper>
       </Box>
     </Container>
