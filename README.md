@@ -35,6 +35,12 @@ This project uses signalR websockets and a react front end to simulate a simple 
 
 #CODE
 
+To add questions go to https://uploadfilestoquizbowl.azurewebsites.net/. The file you upload has to be in the format -
+Question. Answer. Points. Category
+A txt file can have multiple entries by separating them with a newline character
+
+This Azure App will upload the text file to a blob container on Azure which will trigger an Azure Function that will update the database on the quiz bowl.
+
 The quizbowl is kind of heavy. The signalR example I used triggers events that can cause dependency rerenders. Also had instances of stale state that needed an update to show. Walked away from a timer for the time being.
 
 In Quizbowl the important events precede the function that calls them. I also tried to order them by logical execution in the signalRConnection file and quizbowl.

@@ -255,7 +255,7 @@ export default function QuizBowlHooks() {
 
   const checkAnswer = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    alert(answer + " " + questions[questionIndex % questions.length].answer);
     if (answer == questions[questionIndex % questions.length].answer) {
       if (player && gameState) {
         const newPlayer: Player = {

@@ -73,7 +73,7 @@ namespace API.Controllers
             return NoContent();
         }
 
-        [HttpPost]
+        [HttpPost("multipartupload")]
         public async Task<ActionResult<Question[]>> PostMultiQuestions(Question[] questions)
         {
             foreach(Question question in questions)
